@@ -55,18 +55,30 @@ function HomePage() {
       </header>
 
       <section className="px-4">
-        <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-5 shadow-lg">
-          <p className="text-xs uppercase tracking-wider opacity-80">Net Balance</p>
-          <p className={cn("mt-1 text-3xl font-bold tabular-nums", net < 0 && "text-red-200", net > 0 && "text-emerald-100")}>
+        <Card
+          className={cn(
+            "overflow-hidden border-0 text-primary-foreground p-5 shadow-lg transition-colors",
+            net < 0
+              ? "bg-gradient-to-br from-rose-500 to-red-700"
+              : net > 0
+              ? "bg-gradient-to-br from-emerald-500 to-teal-700"
+              : "bg-gradient-to-br from-primary to-primary/80"
+          )}
+        >
+          <p className="text-xs uppercase tracking-wider opacity-90">Net Balance</p>
+          <p className="mt-1 text-3xl font-bold tabular-nums text-white">
             {fmtMoney(net, true)}
           </p>
+          <p className="text-[11px] mt-1 opacity-90">
+            {net < 0 ? "You owe overall" : net > 0 ? "You'll receive overall" : "All settled"}
+          </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-white/10 p-3 backdrop-blur">
-              <p className="text-[10px] uppercase opacity-80">You Got</p>
+            <div className="rounded-lg bg-white/15 p-3 backdrop-blur">
+              <p className="text-[10px] uppercase opacity-90">You Got</p>
               <p className="mt-0.5 font-semibold">{fmtMoney(totalGot)}</p>
             </div>
-            <div className="rounded-lg bg-white/10 p-3 backdrop-blur">
-              <p className="text-[10px] uppercase opacity-80">You Gave</p>
+            <div className="rounded-lg bg-white/15 p-3 backdrop-blur">
+              <p className="text-[10px] uppercase opacity-90">You Gave</p>
               <p className="mt-0.5 font-semibold">{fmtMoney(totalGave)}</p>
             </div>
           </div>

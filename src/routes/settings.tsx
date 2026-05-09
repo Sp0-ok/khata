@@ -24,13 +24,23 @@ export const Route = createFileRoute("/settings")({
   }),
 });
 
-const CURRENCIES = ["₹", "$", "€", "£", "¥", "₨", "₦", "₱", "د.إ", "R"];
+const CURRENCIES = [
+  { sym: "₨", label: "₨ Pakistani Rupee (PKR)" },
+  { sym: "BD", label: "BD Bahraini Dinar (BHD)" },
+  { sym: "₱", label: "₱ Philippine Peso (PHP)" },
+  { sym: "$", label: "$ US Dollar (USD)" },
+  { sym: "€", label: "€ Euro (EUR)" },
+  { sym: "£", label: "£ British Pound (GBP)" },
+  { sym: "¥", label: "¥ Japanese Yen (JPY)" },
+  { sym: "د.إ", label: "د.إ UAE Dirham (AED)" },
+  { sym: "﷼", label: "﷼ Saudi Riyal (SAR)" },
+];
 
 function SettingsPage() {
   const [dark, setDark] = useState(false);
   const [businessName, setBusinessName] = useState("");
   const [logo, setLogo] = useState<string | undefined>();
-  const [cur, setCur] = useState("₹");
+  const [cur, setCur] = useState("₨");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -38,7 +48,7 @@ function SettingsPage() {
       setDark((await getSetting<string>("theme", "light")) === "dark");
       setBusinessName(await getSetting<string>("businessName", ""));
       setLogo(await getSetting<string | undefined>("logo", undefined));
-      setCur(await getSetting<string>("currency", "₹"));
+      setCur(await getSetting<string>("currency", "₨"));
     })();
   }, []);
 
@@ -105,7 +115,7 @@ function SettingsPage() {
             <Select value={cur} onValueChange={setCur}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {CURRENCIES.map((c) => <SelectItem key={c.sym} value={c.sym}>{c.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
