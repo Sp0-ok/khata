@@ -5,7 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Edit2, FileDown, FileUp, FileText, Phone, Trash2, MoreVertical, Search, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, ArrowDownLeft, ArrowUpRight, Edit2, FileDown, FileUp, FileText, Phone, Trash2, MoreVertical, Search, ArrowUpDown } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { PartyDialog } from "./parties.index";
