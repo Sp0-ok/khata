@@ -46,6 +46,21 @@ class BookDB extends Dexie {
 
 export const db = new BookDB();
 
+// Eagerly open the DB and report success/failure so we can detect IndexedDB
+// problems on Android WebView (a known freeze cause).
+if (typeof window !== "undefined") {
+  // Lazy import to avoid a circular dep at module init time.
+  import("./deviceLog").then(({ devLog, openDebugOverlay }) => {
+    devLog("db:opening");
+    db.open()
+      .then(() => devLog("db:opened"))
+      .catch((err) => {
+        devLog("db:open-failed", err, "error");
+        openDebugOverlay();
+      });
+  });
+}
+
 export async function getSetting<T = any>(key: string, fallback: T): Promise<T> {
   const r = await db.settings.get(key);
   return (r?.value ?? fallback) as T;
