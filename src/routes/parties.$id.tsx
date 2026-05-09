@@ -193,7 +193,7 @@ function PartyDetail() {
                 <p className={cn("font-semibold text-sm tabular-nums", isGot ? "text-success" : "text-danger")}>
                   {isGot ? "+" : "-"} {fmtMoney(t.amount).replace(/^[+\-]\s?/, "")}
                 </p>
-                <p className="text-xs text-muted-foreground">{format(t.date, "MMM d yyyy, h:mm a")} · {t.paymentMethod}</p>
+                <p className="text-xs text-muted-foreground">{format(t.date, "MMM d yyyy, h:mm a")}</p>
                 {t.note && <p className="text-xs mt-1">{t.note}</p>}
                 {t.receipt && <img src={t.receipt} alt="" className="mt-2 max-h-24 rounded border border-border" />}
               </div>
