@@ -30,8 +30,10 @@ function PartyDetail() {
   const [txOpen, setTxOpen] = useState(false);
   const [txType, setTxType] = useState<"got" | "gave">("got");
   const [editingTx, setEditingTx] = useState<Transaction | undefined>();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [editParty, setEditParty] = useState(false);
   const [confirmEditParty, setConfirmEditParty] = useState(false);
+  const [confirmDeleteParty, setConfirmDeleteParty] = useState(false);
   const [confirmEditTx, setConfirmEditTx] = useState<Transaction | null>(null);
   const [confirmDeleteTx, setConfirmDeleteTx] = useState<Transaction | null>(null);
   const [q, setQ] = useState("");
@@ -64,7 +66,7 @@ function PartyDetail() {
       case "gave-first": sorted.sort((a, b) => (a.type === b.type ? b.createdAt - a.createdAt : a.type === "gave" ? -1 : 1)); break;
       default: sorted.sort((a, b) => b.createdAt - a.createdAt);
     }
-    return sorted;
+    return sorted.slice(0, 150);
   }, [txs, q, sortBy]);
 
   if (!party) {
@@ -75,28 +77,33 @@ function PartyDetail() {
     );
   }
 
-  const totalGot = (txs ?? []).filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
-  const totalGave = (txs ?? []).filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
-  // Display from party's perspective: + you owe them (teal), − they owe you (red)
-  const net = totalGot - totalGave;
+  const { totalGot, totalGave, net } = useMemo(() => {
+    let totalGot = 0;
+    let totalGave = 0;
+    for (const t of txs ?? []) t.type === "got" ? (totalGot += t.amount) : (totalGave += t.amount);
+    // Display from party's perspective: + you owe them (teal), − they owe you (red)
+    return { totalGot, totalGave, net: totalGot - totalGave };
+  }, [txs]);
 
   function newTx(type: "got" | "gave") {
+    nativeLog("party:quick-tx", type);
     setEditingTx(undefined);
     setTxType(type);
-    setTxOpen(true);
+    afterNativeFrame(() => setTxOpen(true));
   }
 
   async function deleteTx(id: number) {
-    await db.transactions.delete(id);
+    await withNativeTimeout("transaction:delete", db.transactions.delete(id));
     toast.success("Transaction deleted");
   }
 
   async function deleteParty() {
-    await db.transaction("rw", db.parties, db.transactions, async () => {
+    await withNativeTimeout("party:delete", db.transaction("rw", db.parties, db.transactions, async () => {
       await db.transactions.where("partyId").equals(partyId).delete();
       await db.parties.delete(partyId);
-    });
+    }));
     toast.success("Party deleted");
+    clearRadixLocks();
     navigate({ to: "/parties" });
   }
 
