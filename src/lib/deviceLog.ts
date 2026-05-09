@@ -163,11 +163,14 @@ export function devLog(name: string, detail?: unknown, level: LogLevel = "info")
 
 export function getDeviceLog(): DeviceLogEntry[] {
   load();
-  return [...buffer];
+  if (snapshot !== buffer && snapshot.length === buffer.length) return snapshot;
+  if (snapshot.length !== buffer.length) snapshot = buffer.slice();
+  return snapshot;
 }
 
 export function clearDeviceLog() {
   buffer = [];
+  snapshot = buffer;
   try { localStorage.removeItem(STORAGE_KEY); } catch {}
   updateAlwaysOnLogPanel();
   listeners.forEach((l) => l());
