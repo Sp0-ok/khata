@@ -75,7 +75,7 @@ async function copyText(text: string) {
 }
 
 export function DebugOverlay() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const entries = useDeviceLog();
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -126,39 +126,19 @@ export function DebugOverlay() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Open debug overlay"
-        style={{
-          position: "fixed",
-          right: 8,
-          bottom: 80,
-          zIndex: 2147483600,
-          background: "rgba(15,23,42,0.55)",
-          color: "#fff",
-          fontSize: 10,
-          fontWeight: 700,
-          padding: "4px 6px",
-          borderRadius: 6,
-          border: "1px solid rgba(255,255,255,0.2)",
-          letterSpacing: 0.5,
-          backdropFilter: "blur(4px)",
-        }}
-      >
-        DBG
-      </button>
-
       {open && (
         <div
           style={{
             position: "fixed",
-            inset: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             zIndex: 2147483647,
             background: "rgba(0,0,0,0.85)",
             color: "#e2e8f0",
             display: "flex",
             flexDirection: "column",
+            height: "42vh",
             font: "12px ui-monospace,SFMono-Regular,Menlo,monospace",
           }}
         >
