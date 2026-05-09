@@ -188,7 +188,7 @@ export function DebugOverlay() {
             <br />
             {innerWidth}×{innerHeight} dpr={devicePixelRatio} · {location.pathname}
           </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: 8 }}>
+          <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: 8 }}>
             {entries
               .slice()
               .reverse()

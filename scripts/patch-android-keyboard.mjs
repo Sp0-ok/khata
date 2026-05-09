@@ -2,7 +2,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const manifestPath = "android/app/src/main/AndroidManifest.xml";
-const softInputMode = process.env.ANDROID_SOFT_INPUT_MODE || "adjustResize";
+const softInputMode = process.env.ANDROID_SOFT_INPUT_MODE || "adjustPan";
 
 if (!existsSync(manifestPath)) {
   console.log("[android-keyboard] Android project not present; skipping manifest patch.");

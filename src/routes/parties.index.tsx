@@ -4,12 +4,12 @@ import { db } from "@/lib/db";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { LocalInput, LocalTextarea } from "@/components/ui/local-input";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, ArrowLeft } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { NativeModal } from "@/components/ui/native-modal";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { fileToDataURL } from "@/lib/fileData";
 import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -65,7 +65,7 @@ function PartiesPage() {
 
       <div className="px-4 mt-2 mb-3 relative">
         <Search className="absolute left-7 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Search parties…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <LocalInput className="pl-9" placeholder="Search parties…" value={q} onValueChange={setQ} />
       </div>
 
       <div className="px-4 space-y-2">
@@ -152,9 +152,9 @@ export const PartyDialog = memo(function PartyDialog({
       }
     >
         <div className="space-y-3">
-          <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
-          <div><Label>Notes</Label><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <div><Label>Name</Label><LocalInput value={name} onValueChange={setName} /></div>
+          <div><Label>Phone</Label><LocalInput value={phone} onValueChange={setPhone} /></div>
+          <div><Label>Notes</Label><LocalTextarea rows={2} value={notes} onValueChange={setNotes} /></div>
           <div>
             <Label>Photo</Label>
             <Input

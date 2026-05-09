@@ -130,6 +130,15 @@
   body.keyboard-open [data-hide-when-keyboard="true"] {
     display: none !important;
   }
+  body.keyboard-open * {
+    transition: none !important;
+    animation: none !important;
+  }
+  .keyboard-scroll {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
 }
 
 @layer utilities {

@@ -19,13 +19,6 @@ function setKeyboardOpen(open: boolean, height = 0) {
   clearRadixLocks();
 }
 
-function scrollFocusedInputIntoSafeArea() {
-  const active = document.activeElement;
-  if (!(active instanceof HTMLElement)) return;
-  if (!isTextControl(active)) return;
-  active.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
-}
-
 export function installAndroidKeyboardWorkaround() {
   if (installed || typeof window === "undefined" || typeof document === "undefined") return;
   installed = true;
@@ -35,10 +28,9 @@ export function installAndroidKeyboardWorkaround() {
     (event) => {
       if (!isTextControl(event.target)) return;
       document.body.classList.add("keyboard-focus");
+      setKeyboardOpen(true, Number(document.documentElement.style.getPropertyValue("--keyboard-height")) || 0);
       clearRadixLocks();
       nativeLog("input:focus", event.target.tagName.toLowerCase());
-      setTimeout(scrollFocusedInputIntoSafeArea, 80);
-      setTimeout(scrollFocusedInputIntoSafeArea, 300);
     },
     { capture: true },
   );
@@ -47,7 +39,7 @@ export function installAndroidKeyboardWorkaround() {
     "focusout",
     () => {
       setTimeout(() => {
-        if (!isTextControl(document.activeElement)) document.body.classList.remove("keyboard-focus");
+        if (!isTextControl(document.activeElement)) setKeyboardOpen(false);
       }, 120);
     },
     { capture: true },
@@ -57,8 +49,7 @@ export function installAndroidKeyboardWorkaround() {
   const updateFromViewport = () => {
     if (!visualViewport || !isTextControl(document.activeElement)) return;
     const keyboardHeight = Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop);
-    setKeyboardOpen(keyboardHeight > 80, keyboardHeight);
-    if (keyboardHeight > 80) setTimeout(scrollFocusedInputIntoSafeArea, 50);
+    setKeyboardOpen(true, keyboardHeight > 80 ? keyboardHeight : 0);
   };
   visualViewport?.addEventListener("resize", updateFromViewport, { passive: true });
   visualViewport?.addEventListener("scroll", updateFromViewport, { passive: true });
@@ -69,13 +60,11 @@ export function installAndroidKeyboardWorkaround() {
     const height = Number((event as CustomEvent<{ keyboardHeight?: number }>).detail?.keyboardHeight ?? 0);
     nativeLog("keyboard:will-show", height);
     setKeyboardOpen(true, height);
-    setTimeout(scrollFocusedInputIntoSafeArea, 50);
   });
   window.addEventListener("keyboardDidShow", (event: Event) => {
     const height = Number((event as CustomEvent<{ keyboardHeight?: number }>).detail?.keyboardHeight ?? 0);
     nativeLog("keyboard:did-show", height);
     setKeyboardOpen(true, height);
-    setTimeout(scrollFocusedInputIntoSafeArea, 50);
   });
   window.addEventListener("keyboardWillHide", () => setKeyboardOpen(false));
   window.addEventListener("keyboardDidHide", () => setKeyboardOpen(false));
