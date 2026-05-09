@@ -13,7 +13,7 @@ const items: { to: "/" | "/parties" | "/reports"; label: string; icon: typeof Ho
 export const BottomNav = memo(function BottomNav() {
   const loc = useLocation();
   return (
-    <nav data-hide-when-keyboard="true" className="fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card/95">
+    <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card/95">
       <div className="mx-auto flex max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
         {items.map(({ to, label, icon: Icon, exact }) => {
           const active = exact ? loc.pathname === to : loc.pathname.startsWith(to);
