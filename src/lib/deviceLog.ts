@@ -83,22 +83,23 @@ function ensureAlwaysOnLogPanel() {
     alwaysOnPanel.setAttribute("aria-live", "polite");
     Object.assign(alwaysOnPanel.style, {
       position: "fixed",
-      top: "0",
       left: "0",
       right: "0",
+      bottom: "0",
       zIndex: "2147483646",
-      maxHeight: "34vh",
+      maxHeight: "26vh",
       overflow: "hidden",
       pointerEvents: "none",
-      background: "rgba(2, 6, 23, 0.9)",
+      background: "rgba(2, 6, 23, 0.92)",
       color: "#e2e8f0",
-      font: "10px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace",
-      padding: "calc(env(safe-area-inset-top, 0px) + 6px) 8px 7px",
+      font: "10px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace",
+      padding: "4px 8px calc(env(safe-area-inset-bottom, 0px) + 4px)",
       boxSizing: "border-box",
-      borderBottom: "1px solid rgba(148, 163, 184, 0.45)",
-      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.28)",
+      borderTop: "1px solid rgba(148, 163, 184, 0.45)",
+      boxShadow: "0 -8px 24px rgba(0, 0, 0, 0.28)",
       whiteSpace: "pre-wrap",
       wordBreak: "break-word",
+      transition: "transform 0.18s ease",
     });
 
     const header = document.createElement("div");
