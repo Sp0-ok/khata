@@ -119,7 +119,7 @@ function PartyDetail() {
             <Button size="icon" variant="ghost"><MoreVertical className="h-5 w-5" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditParty(true)}><Edit2 className="h-4 w-4 mr-2" />Edit Party</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setConfirmEditParty(true)}><Edit2 className="h-4 w-4 mr-2" />Edit Party</DropdownMenuItem>
             <DropdownMenuItem onClick={() => exportPartyCSV(party, txs ?? [])}><FileDown className="h-4 w-4 mr-2" />Export CSV</DropdownMenuItem>
             <DropdownMenuItem onClick={() => exportPartyPDF(party, txs ?? [])}><FileText className="h-4 w-4 mr-2" />Export PDF</DropdownMenuItem>
             <DropdownMenuItem onClick={() => fileRef.current?.click()}><FileUp className="h-4 w-4 mr-2" />Import CSV</DropdownMenuItem>
