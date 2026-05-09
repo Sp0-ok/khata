@@ -10,25 +10,27 @@ import { applyStoredTheme } from "./lib/theme";
 import { loadCurrency } from "./lib/format";
 import { Toaster } from "./components/ui/sonner";
 import { clearRadixLocks, installAndroidFreezeWatchdog, nativeLog } from "./lib/androidStability";
+import { installDeviceLogListeners, devLog, openDebugOverlay } from "./lib/deviceLog";
+import { DebugOverlay } from "./components/DebugOverlay";
 import "./styles.css";
+
+// Bring up persistent on-device logging FIRST so we capture everything,
+// including bootstrap errors.
+installDeviceLogListeners();
 
 // Surface any uncaught error inside the WebView instead of freezing silently.
 function showFatal(msg: string) {
+  devLog("fatal", msg, "error");
+  openDebugOverlay();
   try {
     const root = document.getElementById("root");
-    if (root) {
+    if (root && !root.hasChildNodes()) {
       root.innerHTML = `<div style="padding:16px;font:14px/1.4 system-ui;color:#b91c1c;white-space:pre-wrap;word-break:break-word">App error:\n${msg}</div>`;
     }
   } catch {}
 }
-window.addEventListener("error", (e) => {
-  console.error("[fatal]", e.error || e.message);
-  showFatal(String(e.error?.stack || e.error?.message || e.message));
-});
-window.addEventListener("unhandledrejection", (e) => {
-  console.error("[fatal-promise]", e.reason);
-  showFatal(String((e.reason as any)?.stack || (e.reason as any)?.message || e.reason));
-});
+window.addEventListener("error", (e) => showFatal(String(e.error?.stack || e.error?.message || e.message)));
+window.addEventListener("unhandledrejection", (e) => showFatal(String((e.reason as any)?.stack || (e.reason as any)?.message || e.reason)));
 
 const router = getRouter();
 const queryClient = router.options.context!.queryClient;
@@ -46,5 +48,6 @@ createRoot(el).render(
   <QueryClientProvider client={queryClient}>
     <RouterProvider router={router} />
     <Toaster richColors position="top-center" />
+    <DebugOverlay />
   </QueryClientProvider>,
 );
