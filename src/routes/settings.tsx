@@ -4,15 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { db, getSetting, setSetting } from "@/lib/db";
 import { setTheme } from "@/lib/theme";
 import { setCurrencySync } from "@/lib/format";
-import { exportFullBackup, fileToDataURL, importFullBackup } from "@/lib/exporters";
+import { exportFullBackup, importFullBackup } from "@/lib/exporters";
+import { fileToDataURL } from "@/lib/fileData";
 import { toast } from "sonner";
+import { clearRadixLocks, nativeLog, withNativeTimeout } from "@/lib/androidStability";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -53,10 +53,13 @@ function SettingsPage() {
   }, []);
 
   async function saveProfile() {
-    await setSetting("businessName", businessName);
-    await setSetting("logo", logo);
-    await setSetting("currency", cur);
+    await withNativeTimeout("settings:save", Promise.all([
+      setSetting("businessName", businessName),
+      setSetting("logo", logo),
+      setSetting("currency", cur),
+    ]));
     setCurrencySync(cur);
+    nativeLog("settings:saved");
     toast.success("Saved");
   }
 
@@ -75,17 +78,17 @@ function SettingsPage() {
 
   async function clearAll() {
     if (!confirm("Delete ALL parties and transactions? This cannot be undone.")) return;
-    await db.transaction("rw", db.parties, db.transactions, async () => {
+    await withNativeTimeout("settings:clear-all", db.transaction("rw", db.parties, db.transactions, async () => {
       await db.parties.clear();
       await db.transactions.clear();
-    });
+    }));
     toast.success("All data cleared");
   }
 
   return (
     <AppShell>
       <header className="flex items-center gap-2 px-4 pt-5 pb-3">
-        <Link to="/" className="rounded-full p-1.5 hover:bg-accent"><ArrowLeft className="h-5 w-5" /></Link>
+        <Link to="/" preload={false} onClick={clearRadixLocks} className="rounded-full p-1.5 hover:bg-accent"><ArrowLeft className="h-5 w-5" /></Link>
         <h1 className="text-xl font-bold">Settings</h1>
       </header>
 
@@ -112,12 +115,13 @@ function SettingsPage() {
           </div>
           <div>
             <Label>Currency</Label>
-            <Select value={cur} onValueChange={setCur}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((c) => <SelectItem key={c.sym} value={c.sym}>{c.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <select
+              value={cur}
+              onChange={(e) => setCur(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-base text-foreground"
+            >
+              {CURRENCIES.map((c) => <option key={c.sym} value={c.sym}>{c.label}</option>)}
+            </select>
           </div>
           <Button onClick={saveProfile} className="w-full">Save</Button>
         </Card>
@@ -128,9 +132,11 @@ function SettingsPage() {
               <p className="font-medium text-sm">Dark mode</p>
               <p className="text-xs text-muted-foreground">Switch app theme</p>
             </div>
-            <Switch
+            <input
+              type="checkbox"
               checked={dark}
-              onCheckedChange={(v) => { setDark(v); setTheme(v ? "dark" : "light"); }}
+              onChange={(e) => { const v = e.target.checked; setDark(v); setTheme(v ? "dark" : "light"); }}
+              className="h-5 w-9 accent-primary"
             />
           </div>
         </Card>
