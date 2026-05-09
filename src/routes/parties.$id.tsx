@@ -5,7 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Edit2, FileDown, FileUp, FileText, Phone, Trash2, MoreVertical, Search, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, ArrowDownLeft, ArrowUpRight, Edit2, FileDown, FileUp, FileText, Phone, Trash2, MoreVertical, Search, ArrowUpDown } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { PartyDialog } from "./parties.index";
@@ -44,6 +44,9 @@ function PartyDetail() {
   const [q, setQ] = useState("");
   const [sortBy, setSortBy] = useState<string>("created-desc");
   const [viewing, setViewing] = useState<Transaction | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [pdfFrom, setPdfFrom] = useState("");
+  const [pdfTo, setPdfTo] = useState("");
 
   const party = useLiveQuery(() => db.parties.get(partyId), [partyId]);
   const txs = useLiveQuery(
@@ -139,7 +142,7 @@ function PartyDetail() {
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => setConfirmEditParty(true)}><Edit2 className="h-4 w-4 mr-2" />Edit Party</DropdownMenuItem>
             <DropdownMenuItem onClick={() => exportPartyCSV(party, txs ?? [])}><FileDown className="h-4 w-4 mr-2" />Export CSV</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => exportPartyPDF(party, txs ?? [])}><FileText className="h-4 w-4 mr-2" />Export PDF</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPdfOpen(true)}><FileText className="h-4 w-4 mr-2" />Export PDF</DropdownMenuItem>
             <DropdownMenuItem onClick={() => fileRef.current?.click()}><FileUp className="h-4 w-4 mr-2" />Import CSV</DropdownMenuItem>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -250,8 +253,8 @@ function PartyDetail() {
       {/* Sticky action bar */}
       <div className="fixed bottom-16 inset-x-0 z-30 px-4 pb-2 pointer-events-none">
         <div className="mx-auto max-w-md grid grid-cols-2 gap-2.5 pointer-events-auto">
-          <Button onClick={() => newTx("gave")} className="bg-danger hover:bg-danger/90 text-danger-foreground h-11 text-sm font-medium shadow-md rounded-xl">You Gave</Button>
-          <Button onClick={() => newTx("got")} className="bg-success hover:bg-success/90 text-success-foreground h-11 text-sm font-medium shadow-md rounded-xl">You Got</Button>
+          <Button onClick={() => newTx("gave")} className="bg-danger hover:bg-danger/90 text-danger-foreground h-11 text-sm font-medium shadow-md rounded-xl"><ArrowUpRight className="mr-1 h-4 w-4" /> You Gave</Button>
+          <Button onClick={() => newTx("got")} className="bg-success hover:bg-success/90 text-success-foreground h-11 text-sm font-medium shadow-md rounded-xl"><ArrowDownLeft className="mr-1 h-4 w-4" /> You Got</Button>
         </div>
       </div>
 
@@ -352,6 +355,38 @@ function PartyDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Export PDF Statement</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground text-xs">Choose an optional date range. Leave empty for all transactions.</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground">From</label>
+                <Input type="date" value={pdfFrom} onChange={(e) => setPdfFrom(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">To</label>
+                <Input type="date" value={pdfTo} onChange={(e) => setPdfTo(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPdfFrom(""); setPdfTo(""); }}>Clear</Button>
+            <Button
+              onClick={() => {
+                const from = pdfFrom ? new Date(pdfFrom + "T00:00:00").getTime() : undefined;
+                const to = pdfTo ? new Date(pdfTo + "T23:59:59").getTime() : undefined;
+                exportPartyPDF(party, txs ?? [], { from, to });
+                setPdfOpen(false);
+              }}
+            >Generate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
