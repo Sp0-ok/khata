@@ -1,5 +1,4 @@
 import type { CapacitorConfig } from "@capacitor/cli";
-import { KeyboardResize } from "@capacitor/keyboard";
 
 const config: CapacitorConfig = {
   appId: "app.lovable.khatabook",
@@ -13,7 +12,7 @@ const config: CapacitorConfig = {
   },
   plugins: {
     Keyboard: {
-      resize: KeyboardResize.Body,
+      resize: "body",
       resizeOnFullScreen: true,
     },
   },
