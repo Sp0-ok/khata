@@ -16,6 +16,7 @@ const MAX_ENTRIES = 250;
 const ALWAYS_ON_LOG_ID = "__khata_always_on_devlog";
 
 let buffer: DeviceLogEntry[] = [];
+let snapshot: DeviceLogEntry[] = buffer;
 let listeners = new Set<() => void>();
 let loaded = false;
 let alwaysOnPanel: HTMLDivElement | null = null;
@@ -117,7 +118,7 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) buffer = parsed.slice(-MAX_ENTRIES);
+      if (Array.isArray(parsed)) { buffer = parsed.slice(-MAX_ENTRIES); snapshot = buffer.slice(); }
     }
   } catch {}
 }
@@ -150,6 +151,7 @@ export function devLog(name: string, detail?: unknown, level: LogLevel = "info")
   const entry: DeviceLogEntry = { t: Date.now(), level, name, detail: detailToString(detail) };
   buffer.push(entry);
   if (buffer.length > MAX_ENTRIES) buffer.splice(0, buffer.length - MAX_ENTRIES);
+  snapshot = buffer.slice();
   updateAlwaysOnLogPanel();
   scheduleSave();
   listeners.forEach((l) => {
@@ -161,11 +163,12 @@ export function devLog(name: string, detail?: unknown, level: LogLevel = "info")
 
 export function getDeviceLog(): DeviceLogEntry[] {
   load();
-  return [...buffer];
+  return snapshot;
 }
 
 export function clearDeviceLog() {
   buffer = [];
+  snapshot = buffer;
   try { localStorage.removeItem(STORAGE_KEY); } catch {}
   updateAlwaysOnLogPanel();
   listeners.forEach((l) => l());
