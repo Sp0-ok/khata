@@ -195,10 +195,10 @@ function PartyDetail() {
                 {t.receipt && <img src={t.receipt} alt="" className="mt-2 max-h-24 rounded border border-border" />}
               </div>
               <div className="flex flex-col gap-1">
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditingTx(t); setTxOpen(true); }}>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setConfirmEditTx(t)}>
                   <Edit2 className="h-3.5 w-3.5" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-7 w-7 text-danger" onClick={() => deleteTx(t.id!)}>
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-danger" onClick={() => setConfirmDeleteTx(t)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
