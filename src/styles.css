@@ -115,30 +115,6 @@
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
-  body.native-modal-open * {
-    animation: none !important;
-    transition-duration: 0s !important;
-  }
-  body.keyboard-focus input,
-  body.keyboard-focus textarea,
-  body.keyboard-focus select,
-  body.keyboard-focus [role="dialog"] {
-    animation: none !important;
-    transition: none !important;
-    backdrop-filter: none !important;
-  }
-  body.keyboard-open [data-hide-when-keyboard="true"] {
-    display: none !important;
-  }
-  body.keyboard-open * {
-    transition: none !important;
-    animation: none !important;
-  }
-  .keyboard-scroll {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-  }
 }
 
 @layer utilities {

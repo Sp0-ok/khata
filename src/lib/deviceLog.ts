@@ -264,7 +264,6 @@ export function clearDeviceLog() {
   buffer = [];
   snapshot = buffer;
   try { localStorage.removeItem(STORAGE_KEY); } catch {}
-  updateAlwaysOnLogPanel();
   listeners.forEach((l) => l());
 }
 
@@ -285,7 +284,6 @@ export function installDeviceLogListeners() {
   if (installed || typeof window === "undefined") return;
   installed = true;
   load();
-  ensureAlwaysOnLogPanel();
   devLog("app:start", { ua: navigator.userAgent, w: innerWidth, h: innerHeight });
 
   window.addEventListener("error", (e) => {
