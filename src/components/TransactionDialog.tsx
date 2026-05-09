@@ -115,7 +115,7 @@ export function TransactionDialog({ open, onOpenChange, partyId, initialType, ex
               type="text"
               inputMode="decimal"
               value={amount}
-              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+              onChange={(e) => setAmount(groupAmount(e.target.value))}
               autoFocus
               placeholder="0.00"
             />
