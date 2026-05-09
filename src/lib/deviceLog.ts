@@ -16,6 +16,7 @@ const MAX_ENTRIES = 250;
 const ALWAYS_ON_LOG_ID = "__khata_always_on_devlog";
 
 let buffer: DeviceLogEntry[] = [];
+let snapshot: DeviceLogEntry[] = buffer;
 let listeners = new Set<() => void>();
 let loaded = false;
 let alwaysOnPanel: HTMLDivElement | null = null;
