@@ -36,9 +36,9 @@ const PartiesIndexRoute = PartiesIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartiesIdRoute = PartiesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => PartiesRoute,
+  id: '/parties/$id',
+  path: '/parties/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -75,6 +75,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
+  PartiesIdRoute: typeof PartiesIdRoute
   PartiesIndexRoute: typeof PartiesIndexRoute
 }
 
@@ -110,10 +111,10 @@ declare module '@tanstack/react-router' {
     }
     '/parties/$id': {
       id: '/parties/$id'
-      path: '/$id'
+      path: '/parties/$id'
       fullPath: '/parties/$id'
       preLoaderRoute: typeof PartiesIdRouteImport
-      parentRoute: typeof PartiesRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -122,18 +123,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,
+  PartiesIdRoute: PartiesIdRoute,
   PartiesIndexRoute: PartiesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
