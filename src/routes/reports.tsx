@@ -107,51 +107,80 @@ function ReportsPage() {
         </Card>
       </section>
 
-      <section className="px-4 mt-4">
-        <Card className="p-3">
-          <p className="text-xs font-semibold mb-2">Money In vs Out</p>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
-                <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
-                <Tooltip
-                  contentStyle={{
-                    background: "var(--card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="Got" stroke="oklch(0.62 0.16 155)" strokeWidth={2.5} dot={false} />
-                <Line type="monotone" dataKey="Gave" stroke="oklch(0.6 0.22 25)" strokeWidth={2.5} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+      <section className="px-4 mt-4 pb-8">
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-sm font-semibold">Money In vs Out</p>
+              <p className="text-[10px] text-muted-foreground">Cash flow over time</p>
+            </div>
+            <div className="flex items-center gap-3 text-[10px]">
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-success" /> In
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-danger" /> Out
+              </span>
+            </div>
           </div>
-        </Card>
-      </section>
-
-      <section className="px-4 mt-4">
-        <Card className="p-3">
-          <p className="text-xs font-semibold mb-2">Net Balance Trend</p>
-          <div className="h-48">
+          <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
-                <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+              <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(0.7 0.16 155)" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="oklch(0.7 0.16 155)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(0.65 0.22 25)" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="oklch(0.65 0.22 25)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="var(--border)" strokeDasharray="2 4" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval="preserveStartEnd"
+                  minTickGap={20}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={40}
+                  tickFormatter={(v) => fmtCompact(v as number)}
+                />
                 <Tooltip
                   contentStyle={{
                     background: "var(--card)",
                     border: "1px solid var(--border)",
-                    borderRadius: 8,
+                    borderRadius: 10,
                     fontSize: 12,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                   }}
+                  formatter={(v: number, name) => [fmtMoney(v), name === "Got" ? "In" : "Out"]}
                 />
-                <Line type="monotone" dataKey="Net" stroke="var(--primary)" strokeWidth={2.5} dot={false} />
-              </LineChart>
+                <Area
+                  type="monotone"
+                  dataKey="Got"
+                  stroke="oklch(0.62 0.16 155)"
+                  strokeWidth={2.5}
+                  fill="url(#gIn)"
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Gave"
+                  stroke="oklch(0.6 0.22 25)"
+                  strokeWidth={2.5}
+                  fill="url(#gOut)"
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </Card>
