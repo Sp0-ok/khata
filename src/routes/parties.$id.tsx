@@ -264,6 +264,56 @@ function PartyDetail() {
       />
       <PartyDialog open={editParty} onOpenChange={setEditParty} existing={party} />
 
+      <Dialog open={!!viewing} onOpenChange={(v) => !v && setViewing(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Transaction Details</DialogTitle>
+          </DialogHeader>
+          {viewing && (
+            <div className="space-y-3 text-sm">
+              <div className={cn("rounded-xl p-4 text-center",
+                viewing.type === "got" ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+                <p className="text-xs uppercase opacity-80">{viewing.type === "got" ? "You Got" : "You Gave"}</p>
+                <p className="text-2xl font-bold tabular-nums mt-1">{fmtMoney(viewing.amount)}</p>
+              </div>
+              <div className="grid grid-cols-[110px_1fr] gap-y-1.5">
+                <span className="text-muted-foreground">Entry date</span>
+                <span>{format(viewing.date, "MMM d yyyy, h:mm a")}</span>
+                <span className="text-muted-foreground">Created</span>
+                <span>{format(viewing.createdAt, "MMM d yyyy, h:mm a")}</span>
+                {viewing.updatedAt && (
+                  <>
+                    <span className="text-muted-foreground">Last edited</span>
+                    <span>{format(viewing.updatedAt, "MMM d yyyy, h:mm a")}</span>
+                  </>
+                )}
+                {viewing.note && (
+                  <>
+                    <span className="text-muted-foreground">Note</span>
+                    <span className="break-words">{viewing.note}</span>
+                  </>
+                )}
+              </div>
+              {viewing.receipt && (
+                <img src={viewing.receipt} alt="receipt" className="w-full rounded border border-border" />
+              )}
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              className="text-danger border-danger/40 hover:bg-danger/10"
+              onClick={() => { setConfirmDeleteTx(viewing); setViewing(null); }}
+            >
+              <Trash2 className="h-4 w-4 mr-1.5" /> Delete
+            </Button>
+            <Button onClick={() => { setConfirmEditTx(viewing); setViewing(null); }}>
+              <Edit2 className="h-4 w-4 mr-1.5" /> Edit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={confirmEditParty} onOpenChange={setConfirmEditParty}>
         <AlertDialogContent>
           <AlertDialogHeader>
