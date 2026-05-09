@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { NativeModal } from "@/components/ui/native-modal";
-import { LocalInput } from "@/components/ui/local-input";
+import { Input } from "@/components/ui/input";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -58,13 +58,13 @@ export const PartyPickerDialog = memo(function PartyPickerDialog({
   return (
     <>
       <NativeModal open={open && pickedId === null} onOpenChange={onOpenChange} title="Select Party" className="max-w-sm">
-          <LocalInput
+          <Input
             className="bg-background outline-none focus:ring-1 focus:ring-ring"
             placeholder="Search…"
             value={q}
-            onValueChange={setQ}
+            onChange={(event) => setQ(event.target.value)}
           />
-          <div className="keyboard-scroll h-72 -mx-2">
+          <div className="h-72 -mx-2 overflow-y-auto overscroll-contain">
             {filtered.map((p) => (
               <button
                 key={p.id}
@@ -90,11 +90,11 @@ export const PartyPickerDialog = memo(function PartyPickerDialog({
           <div className="border-t border-border pt-3 space-y-2">
             <p className="text-xs text-muted-foreground">Or quick add a new party</p>
             <div className="flex gap-2">
-              <LocalInput
+              <Input
                 className="bg-background outline-none focus:ring-1 focus:ring-ring"
                 placeholder="New party name"
                 value={newName}
-                onValueChange={setNewName}
+                onChange={(event) => setNewName(event.target.value)}
               />
               <Button onClick={quickCreate} disabled={!newName.trim()}>
                 <Plus className="h-4 w-4" />
