@@ -4,9 +4,9 @@ import { db } from "@/lib/db";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { useState, useMemo } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { format, startOfDay, subDays, subMonths } from "date-fns";
-import { fmtMoney } from "@/lib/format";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { format, subDays } from "date-fns";
+import { fmtMoney, fmtCompact } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/reports")({
@@ -37,8 +37,8 @@ function ReportsPage() {
     const cutoff = r.days === 0 ? 0 : subDays(new Date(), r.days).getTime();
     const filtered = all.filter((t) => t.date >= cutoff);
 
-    // Decide bucket size
-    const buckets = r.days <= 30 ? 30 : r.days <= 90 ? 30 : r.days <= 180 ? 24 : r.days <= 365 ? 24 : 24;
+    // Decide bucket size — keep it sparse so labels don't collide
+    const buckets = r.days <= 30 ? 8 : r.days <= 90 ? 10 : r.days <= 180 ? 10 : 12;
     const start = r.days === 0
       ? (filtered.length ? Math.min(...filtered.map((t) => t.date)) : Date.now())
       : cutoff;
@@ -50,7 +50,6 @@ function ReportsPage() {
       ts: start + step * (i + 0.5),
       got: 0,
       gave: 0,
-      net: 0,
     }));
 
     filtered.forEach((t) => {
@@ -59,16 +58,12 @@ function ReportsPage() {
       else data[idx].gave += t.amount;
     });
 
-    let running = 0;
-    const chartData = data.map((d) => {
-      running += d.got - d.gave;
-      return {
-        label: format(d.ts, r.days <= 90 ? "MMM d" : "MMM yy"),
-        Got: Math.round(d.got),
-        Gave: Math.round(d.gave),
-        Net: Math.round(running),
-      };
-    });
+    const fmtStr = r.days <= 30 ? "d MMM" : r.days <= 365 ? "d MMM" : "MMM yy";
+    const chartData = data.map((d) => ({
+      label: format(d.ts, fmtStr),
+      Got: Math.round(d.got),
+      Gave: Math.round(d.gave),
+    }));
 
     const totalGot = filtered.filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
     const totalGave = filtered.filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
