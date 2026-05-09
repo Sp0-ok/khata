@@ -59,9 +59,9 @@ function HomePage() {
           className={cn(
             "overflow-hidden border-0 text-primary-foreground p-5 shadow-lg transition-colors",
             net < 0
-              ? "bg-gradient-to-br from-rose-500 to-red-700"
+              ? "bg-gradient-to-br from-rose-400 via-rose-500 to-red-500/90"
               : net > 0
-              ? "bg-gradient-to-br from-emerald-500 to-teal-700"
+              ? "bg-gradient-to-br from-teal-400 via-teal-500 to-cyan-700"
               : "bg-gradient-to-br from-primary to-primary/80"
           )}
         >
