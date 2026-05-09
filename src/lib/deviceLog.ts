@@ -13,10 +13,102 @@ export interface DeviceLogEntry {
 
 const STORAGE_KEY = "__khata_devlog_v1";
 const MAX_ENTRIES = 250;
+const ALWAYS_ON_LOG_ID = "__khata_always_on_devlog";
 
 let buffer: DeviceLogEntry[] = [];
 let listeners = new Set<() => void>();
 let loaded = false;
+let alwaysOnPanel: HTMLDivElement | null = null;
+let alwaysOnBody: HTMLDivElement | null = null;
+
+function ensureAlwaysOnLogPanel() {
+  if (typeof document === "undefined") return;
+
+  const attach = () => {
+    if (alwaysOnPanel && document.documentElement.contains(alwaysOnPanel)) return;
+    if (!document.body) return;
+
+    const existing = document.getElementById(ALWAYS_ON_LOG_ID) as HTMLDivElement | null;
+    if (existing) {
+      alwaysOnPanel = existing;
+      alwaysOnBody = existing.querySelector("[data-log-body]") as HTMLDivElement | null;
+      updateAlwaysOnLogPanel();
+      return;
+    }
+
+    alwaysOnPanel = document.createElement("div");
+    alwaysOnPanel.id = ALWAYS_ON_LOG_ID;
+    alwaysOnPanel.setAttribute("aria-live", "polite");
+    Object.assign(alwaysOnPanel.style, {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      right: "0",
+      zIndex: "2147483646",
+      maxHeight: "34vh",
+      overflow: "hidden",
+      pointerEvents: "none",
+      background: "rgba(2, 6, 23, 0.9)",
+      color: "#e2e8f0",
+      font: "10px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace",
+      padding: "calc(env(safe-area-inset-top, 0px) + 6px) 8px 7px",
+      boxSizing: "border-box",
+      borderBottom: "1px solid rgba(148, 163, 184, 0.45)",
+      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.28)",
+      whiteSpace: "pre-wrap",
+      wordBreak: "break-word",
+    });
+
+    const header = document.createElement("div");
+    header.setAttribute("data-log-header", "true");
+    Object.assign(header.style, {
+      color: "#f8fafc",
+      fontWeight: "700",
+      marginBottom: "3px",
+    });
+
+    alwaysOnBody = document.createElement("div");
+    alwaysOnBody.setAttribute("data-log-body", "true");
+    Object.assign(alwaysOnBody.style, {
+      opacity: "0.92",
+      maxHeight: "calc(34vh - 24px)",
+      overflow: "hidden",
+    });
+
+    alwaysOnPanel.appendChild(header);
+    alwaysOnPanel.appendChild(alwaysOnBody);
+    document.body.appendChild(alwaysOnPanel);
+    updateAlwaysOnLogPanel();
+  };
+
+  if (document.body) attach();
+  else document.addEventListener("DOMContentLoaded", attach, { once: true });
+}
+
+function updateAlwaysOnLogPanel() {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  if (!alwaysOnPanel || !document.documentElement.contains(alwaysOnPanel)) {
+    ensureAlwaysOnLogPanel();
+  }
+  if (!alwaysOnPanel || !alwaysOnBody) return;
+
+  const header = alwaysOnPanel.querySelector("[data-log-header]") as HTMLDivElement | null;
+  if (header) {
+    header.textContent = `DBG LOG ALWAYS ON · ${buffer.length} events · ${innerWidth}×${innerHeight}`;
+  }
+
+  const recent = buffer.slice(-9).reverse();
+  alwaysOnBody.textContent = recent.length
+    ? recent
+        .map((e) => {
+          const ts = new Date(e.t).toISOString().slice(11, 23);
+          const level = e.level === "error" ? "ERR" : e.level === "warn" ? "WRN" : "INF";
+          const detail = e.detail ? ` :: ${e.detail.slice(0, 220)}` : "";
+          return `${ts} ${level} ${e.name}${detail}`;
+        })
+        .join("\n")
+    : "Waiting for events...";
+}
 
 function load() {
   if (loaded || typeof window === "undefined") return;
@@ -58,6 +150,7 @@ export function devLog(name: string, detail?: unknown, level: LogLevel = "info")
   const entry: DeviceLogEntry = { t: Date.now(), level, name, detail: detailToString(detail) };
   buffer.push(entry);
   if (buffer.length > MAX_ENTRIES) buffer.splice(0, buffer.length - MAX_ENTRIES);
+  updateAlwaysOnLogPanel();
   scheduleSave();
   listeners.forEach((l) => {
     try { l(); } catch {}
@@ -74,6 +167,7 @@ export function getDeviceLog(): DeviceLogEntry[] {
 export function clearDeviceLog() {
   buffer = [];
   try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  updateAlwaysOnLogPanel();
   listeners.forEach((l) => l());
 }
 
@@ -94,6 +188,7 @@ export function installDeviceLogListeners() {
   if (installed || typeof window === "undefined") return;
   installed = true;
   load();
+  ensureAlwaysOnLogPanel();
   devLog("app:start", { ua: navigator.userAgent, w: innerWidth, h: innerHeight });
 
   window.addEventListener("error", (e) => {
