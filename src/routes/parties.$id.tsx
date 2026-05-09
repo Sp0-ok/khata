@@ -36,6 +36,9 @@ function PartyDetail() {
   const [txType, setTxType] = useState<"got" | "gave">("got");
   const [editingTx, setEditingTx] = useState<Transaction | undefined>();
   const [editParty, setEditParty] = useState(false);
+  const [confirmEditParty, setConfirmEditParty] = useState(false);
+  const [confirmEditTx, setConfirmEditTx] = useState<Transaction | null>(null);
+  const [confirmDeleteTx, setConfirmDeleteTx] = useState<Transaction | null>(null);
   const [q, setQ] = useState("");
 
   const party = useLiveQuery(() => db.parties.get(partyId), [partyId]);
