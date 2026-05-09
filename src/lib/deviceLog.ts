@@ -17,7 +17,7 @@ const ALWAYS_ON_LOG_ID = "__khata_always_on_devlog";
 
 let buffer: DeviceLogEntry[] = [];
 let snapshot: DeviceLogEntry[] = buffer;
-let listeners = new Set<() => void>();
+const listeners = new Set<() => void>();
 let loaded = false;
 let alwaysOnPanel: HTMLDivElement | null = null;
 let alwaysOnBody: HTMLDivElement | null = null;
@@ -46,7 +46,9 @@ async function copyDeviceLogText() {
     await navigator.clipboard.writeText(text);
     devLog("always-log:copy", "ok");
     return;
-  } catch {}
+  } catch {
+    // Clipboard APIs are optional inside Android WebView.
+  }
   try {
     const ta = document.createElement("textarea");
     ta.value = text;
@@ -214,7 +216,9 @@ function load() {
         snapshot = buffer.slice();
       }
     }
-  } catch {}
+  } catch {
+    // Ignore malformed stored debug logs.
+  }
 }
 
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -225,7 +229,9 @@ function scheduleSave() {
     saveTimer = undefined;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(buffer));
-    } catch {}
+    } catch {
+      // Logging must never interrupt the app.
+    }
   }, 250);
 }
 
@@ -251,7 +257,9 @@ export function devLog(name: string, detail?: unknown, level: LogLevel = "info")
   listeners.forEach((l) => {
     try {
       l();
-    } catch {}
+    } catch {
+      // Subscriber failures should not break logging.
+    }
   });
   if (level === "error") console.error("[devlog]", name, entry.detail ?? "");
   else if (level === "warn") console.warn("[devlog]", name, entry.detail ?? "");
@@ -267,7 +275,9 @@ export function clearDeviceLog() {
   snapshot = buffer;
   try {
     localStorage.removeItem(STORAGE_KEY);
-  } catch {}
+  } catch {
+    // Storage can be unavailable in restricted WebViews.
+  }
   listeners.forEach((l) => l());
 }
 
@@ -295,8 +305,8 @@ export function installDeviceLogListeners() {
     openDebugOverlay();
   });
   window.addEventListener("unhandledrejection", (e: PromiseRejectionEvent) => {
-    const r: any = e.reason;
-    devLog("window:unhandledrejection", r?.stack || r?.message || r, "error");
+    const r = e.reason;
+    devLog("window:unhandledrejection", r instanceof Error ? r.stack || r.message : r, "error");
     openDebugOverlay();
   });
   document.addEventListener("visibilitychange", () => {
