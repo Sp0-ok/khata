@@ -103,6 +103,19 @@ function ReportsPage() {
         ))}
       </div>
 
+      {range === "custom" && (
+        <div className="px-4 mt-3 flex items-end gap-2">
+          <div className="flex-1">
+            <label className="text-[10px] uppercase text-muted-foreground">From</label>
+            <Input type="date" value={customFrom} max={customTo} onChange={(e) => setCustomFrom(e.target.value)} className="h-9" />
+          </div>
+          <div className="flex-1">
+            <label className="text-[10px] uppercase text-muted-foreground">To</label>
+            <Input type="date" value={customTo} min={customFrom} onChange={(e) => setCustomTo(e.target.value)} className="h-9" />
+          </div>
+        </div>
+      )}
+
       <section className="px-4 mt-4 grid grid-cols-3 gap-2">
         <Card className="p-3">
           <p className="text-[10px] uppercase text-muted-foreground">Got</p>
