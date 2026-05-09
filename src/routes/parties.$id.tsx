@@ -119,7 +119,10 @@ function PartyDetail() {
   const totals = useMemo(() => {
     let totalGot = 0;
     let totalGave = 0;
-    for (const t of txs ?? []) t.type === "got" ? (totalGot += t.amount) : (totalGave += t.amount);
+    for (const t of txs ?? []) {
+      if (t.type === "got") totalGot += t.amount;
+      else totalGave += t.amount;
+    }
     return { totalGot, totalGave, net: totalGot - totalGave };
   }, [txs]);
 
@@ -162,8 +165,8 @@ function PartyDetail() {
     try {
       const n = await importPartyCSV(partyId, f);
       toast.success(`Imported ${n} transactions`);
-    } catch (err: any) {
-      toast.error(err.message ?? "Import failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Import failed");
     } finally {
       e.target.value = "";
     }
@@ -517,7 +520,7 @@ const TransactionRow = memo(function TransactionRow({
             isGot ? "text-success" : "text-danger",
           )}
         >
-          {isGot ? "+" : "-"} {fmtMoney(transaction.amount).replace(/^[+\-]\s?/, "")}
+          {isGot ? "+" : "-"} {fmtMoney(transaction.amount).replace(/^[+-]\s?/, "")}
         </p>
         <p className="text-xs text-muted-foreground">
           {format(transaction.createdAt, "MMM d yyyy, h:mm a")}
