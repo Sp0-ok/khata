@@ -44,21 +44,19 @@ export function clearRadixLocks() {
 }
 
 export function installAndroidFreezeWatchdog() {
-  if (typeof window === "undefined" || !isNativeAndroid() || (window as any).__KHATA_WATCHDOG__) return;
+  // Run on every platform now (browser preview + Android) so we catch hangs anywhere.
+  if (typeof window === "undefined" || (window as any).__KHATA_WATCHDOG__) return;
   (window as any).__KHATA_WATCHDOG__ = true;
   let last = performance.now();
   const tick = () => {
     const now = performance.now();
     const gap = now - last;
-    if (gap > 2500) nativeLog("main-thread-freeze", `${Math.round(gap)}ms`, "error");
+    if (gap > 1500) {
+      devLog("main-thread-freeze", `${Math.round(gap)}ms`, "error");
+      openDebugOverlay();
+    }
     last = now;
-    setTimeout(tick, 1000);
+    setTimeout(tick, 800);
   };
-  setTimeout(tick, 1000);
-  ["pointerdown", "click", "touchstart"].forEach((type) => {
-    window.addEventListener(type, (e) => {
-      const target = e.target as HTMLElement | null;
-      nativeLog(`event:${type}`, target?.tagName?.toLowerCase());
-    }, { passive: true, capture: true });
-  });
+  setTimeout(tick, 800);
 }
