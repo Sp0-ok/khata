@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { db, type Transaction, type TxType } from "@/lib/db";
 import { fileToDataURL } from "@/lib/exporters";
+import { groupAmount, unformatAmount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -17,12 +18,11 @@ interface Props {
   onSaved?: () => void;
 }
 
-const PAYMENT_METHODS = ["Cash", "UPI", "Bank Transfer", "Card", "Cheque", "Other"];
+
 
 export function TransactionDialog({ open, onOpenChange, partyId, initialType, existing, onSaved }: Props) {
   const [type, setType] = useState<TxType>(initialType);
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState("Cash");
   const [note, setNote] = useState("");
   const [receipt, setReceipt] = useState<string | undefined>();
   const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 16));
@@ -32,15 +32,13 @@ export function TransactionDialog({ open, onOpenChange, partyId, initialType, ex
     if (open) {
       if (existing) {
         setType(existing.type);
-        setAmount(String(existing.amount));
-        setMethod(existing.paymentMethod || "Cash");
+        setAmount(groupAmount(String(existing.amount)));
         setNote(existing.note || "");
         setReceipt(existing.receipt);
         setDate(new Date(existing.date).toISOString().slice(0, 16));
       } else {
         setType(initialType);
         setAmount("");
-        setMethod("Cash");
         setNote("");
         setReceipt(undefined);
         setDate(new Date().toISOString().slice(0, 16));
@@ -49,22 +47,30 @@ export function TransactionDialog({ open, onOpenChange, partyId, initialType, ex
   }, [open, existing, initialType]);
 
   async function handleSave() {
-    const amt = parseFloat(amount);
+    const amt = parseFloat(unformatAmount(amount));
     if (!isFinite(amt) || amt <= 0) return;
     setSaving(true);
     try {
-      const payload = {
-        partyId,
-        amount: amt,
-        type,
-        paymentMethod: method,
-        note,
-        receipt,
-        date: new Date(date).getTime(),
-        createdAt: existing?.createdAt ?? Date.now(),
-      };
-      if (existing?.id) await db.transactions.update(existing.id, payload);
-      else await db.transactions.add(payload);
+      if (existing?.id) {
+        await db.transactions.update(existing.id, {
+          amount: amt,
+          type,
+          note,
+          receipt,
+          date: new Date(date).getTime(),
+          updatedAt: Date.now(),
+        });
+      } else {
+        await db.transactions.add({
+          partyId,
+          amount: amt,
+          type,
+          note,
+          receipt,
+          date: new Date(date).getTime(),
+          createdAt: Date.now(),
+        });
+      }
       onSaved?.();
       onOpenChange(false);
     } finally {
