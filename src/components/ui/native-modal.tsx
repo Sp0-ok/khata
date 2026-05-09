@@ -28,7 +28,7 @@ export function NativeModal({ open, title, children, footer, onOpenChange, class
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-foreground/35 px-3 py-3" role="presentation">
+    <div className="absolute inset-x-0 top-0 z-50 min-h-[100dvh] bg-foreground/35 px-3 py-3" role="presentation">
       <div
         role="dialog"
         aria-modal="true"

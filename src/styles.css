@@ -94,16 +94,41 @@
     border-color: var(--color-border);
   }
   html, body {
+    min-height: 100%;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
   }
+  #root {
+    min-height: 100dvh;
+  }
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px;
+  }
   /* Safe areas for Capacitor APK */
   body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+  }
+  body.native-modal-open * {
+    animation: none !important;
+    transition-duration: 0s !important;
+  }
+  body.keyboard-focus input,
+  body.keyboard-focus textarea,
+  body.keyboard-focus select,
+  body.keyboard-focus [role="dialog"] {
+    animation: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+  }
+  body.keyboard-open [data-hide-when-keyboard="true"] {
+    display: none !important;
   }
 }
 

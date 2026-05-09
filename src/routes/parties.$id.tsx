@@ -201,7 +201,7 @@ function PartyDetail() {
         )}
       </section>
 
-      <div className="fixed bottom-16 inset-x-0 z-30 px-4 pb-2 pointer-events-none">
+      <div data-hide-when-keyboard="true" className="fixed bottom-16 inset-x-0 z-30 px-4 pb-2 pointer-events-none">
         <div className="mx-auto max-w-md grid grid-cols-2 gap-2.5 pointer-events-auto">
           <Button onClick={() => newTx("gave")} className="bg-danger hover:bg-danger/90 text-danger-foreground h-11 text-sm font-medium rounded-xl"><ArrowUpRight className="mr-1 h-4 w-4" /> You Gave</Button>
           <Button onClick={() => newTx("got")} className="bg-success hover:bg-success/90 text-success-foreground h-11 text-sm font-medium rounded-xl"><ArrowDownLeft className="mr-1 h-4 w-4" /> You Got</Button>
