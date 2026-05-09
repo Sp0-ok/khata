@@ -1,4 +1,5 @@
 import { Capacitor } from "@capacitor/core";
+import { devLog, openDebugOverlay } from "./deviceLog";
 
 export const isNativeAndroid = () =>
   typeof window !== "undefined" &&
@@ -7,27 +8,9 @@ export const isNativeAndroid = () =>
 
 type EventLevel = "info" | "warn" | "error";
 
-const MAX_EVENTS = 80;
-const events: Array<{ at: string; level: EventLevel; name: string; detail?: string }> = [];
-
-function detailToString(detail: unknown) {
-  if (detail == null) return undefined;
-  if (detail instanceof Error) return detail.stack || detail.message;
-  if (typeof detail === "string") return detail;
-  try {
-    return JSON.stringify(detail).slice(0, 800);
-  } catch {
-    return String(detail).slice(0, 800);
-  }
-}
-
 export function nativeLog(name: string, detail?: unknown, level: EventLevel = "info") {
-  if (typeof window === "undefined") return;
-  const event = { at: new Date().toLocaleTimeString(), level, name, detail: detailToString(detail) };
-  events.push(event);
-  if (events.length > MAX_EVENTS) events.shift();
-  (window as any).__KHATA_NATIVE_EVENTS__ = events;
-  if (isNativeAndroid()) console[level === "error" ? "error" : level === "warn" ? "warn" : "debug"]("[android]", event);
+  // Forward everything into the persistent on-device log
+  devLog(name, detail, level);
 }
 
 export async function withNativeTimeout<T>(label: string, work: Promise<T>, ms = 8000): Promise<T> {
