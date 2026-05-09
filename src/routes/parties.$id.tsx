@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Edit2, FileDown, FileUp, FileText, Phone, Trash2, MoreVertical, Search } from "lucide-react";
 import { useRef, useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
-import { PartyDialog } from "./parties";
+import { PartyDialog } from "./parties.index";
 import { fmtMoney } from "@/lib/format";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
