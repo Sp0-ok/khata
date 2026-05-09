@@ -160,7 +160,7 @@ function ReportsPage() {
                     fontSize: 12,
                     boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                   }}
-                  formatter={(v: number, name) => [fmtMoney(v), name === "Got" ? "In" : "Out"]}
+                  formatter={(v: any, name: any) => [fmtMoney(Number(v) || 0), name === "Got" ? "In" : "Out"]}
                 />
                 <Area
                   type="monotone"
