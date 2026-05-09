@@ -296,8 +296,8 @@ function PartyDetail() {
         <div className="space-y-3 text-sm">
           <p className="text-muted-foreground text-xs">Choose an optional date range. Leave empty for all transactions.</p>
           <div className="grid grid-cols-2 gap-2">
-            <div><label className="text-xs text-muted-foreground">From</label><Input type="date" value={pdfFrom} onChange={(e) => setPdfFrom(e.target.value)} /></div>
-            <div><label className="text-xs text-muted-foreground">To</label><Input type="date" value={pdfTo} onChange={(e) => setPdfTo(e.target.value)} /></div>
+            <div><label className="text-xs text-muted-foreground">From</label><LocalInput type="date" value={pdfFrom} onValueChange={setPdfFrom} /></div>
+            <div><label className="text-xs text-muted-foreground">To</label><LocalInput type="date" value={pdfTo} onValueChange={setPdfTo} /></div>
           </div>
         </div>
       </NativeModal>

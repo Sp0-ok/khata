@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { LocalInput } from "@/components/ui/local-input";
 import { useState, useMemo } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format, subDays } from "date-fns";
@@ -106,11 +107,11 @@ function ReportsPage() {
         <div className="px-4 mt-3 flex items-end gap-2">
           <div className="flex-1">
             <label className="text-[10px] uppercase text-muted-foreground">From</label>
-            <Input type="date" value={customFrom} max={customTo} onChange={(e) => setCustomFrom(e.target.value)} className="h-9" />
+            <LocalInput type="date" value={customFrom} max={customTo} onValueChange={setCustomFrom} className="h-9" />
           </div>
           <div className="flex-1">
             <label className="text-[10px] uppercase text-muted-foreground">To</label>
-            <Input type="date" value={customTo} min={customFrom} onChange={(e) => setCustomTo(e.target.value)} className="h-9" />
+            <LocalInput type="date" value={customTo} min={customFrom} onValueChange={setCustomTo} className="h-9" />
           </div>
         </div>
       )}
