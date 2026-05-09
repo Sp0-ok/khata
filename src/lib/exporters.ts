@@ -5,6 +5,7 @@ import { db, type Party, type Transaction } from "./db";
 import { format } from "date-fns";
 import { currency, groupAmount } from "./format";
 import { saveToKhataFolder } from "./saveFile";
+export { fileToDataURL } from "./fileData";
 
 // jsPDF's built-in helvetica font has no glyphs for ₨, ₹, ﷼, د.إ etc. so we
 // substitute a safe ASCII code for the PDF only.
@@ -315,11 +316,3 @@ export async function importFullBackup(file: File): Promise<void> {
   });
 }
 
-export async function fileToDataURL(file: File): Promise<string> {
-  return new Promise((res, rej) => {
-    const fr = new FileReader();
-    fr.onload = () => res(fr.result as string);
-    fr.onerror = rej;
-    fr.readAsDataURL(file);
-  });
-}
