@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowDownLeft, ArrowUpRight, Settings as SettingsIcon } from "lucide-react";
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { PartyPickerDialog } from "@/components/PartyPickerDialog";
 import { format } from "date-fns";
-import type { TxType } from "@/lib/db";
+import type { Transaction, TxType } from "@/lib/db";
 import { cn } from "@/lib/utils";
+import { afterNativeFrame, clearRadixLocks, nativeLog } from "@/lib/androidStability";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -27,22 +28,31 @@ function HomePage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerType, setPickerType] = useState<TxType>("got");
 
-  const txs = useLiveQuery(() => db.transactions.orderBy("date").reverse().limit(50).toArray(), []);
   const allTxs = useLiveQuery(() => db.transactions.toArray(), []);
   const parties = useLiveQuery(() => db.parties.toArray(), []);
   const businessName = useLiveQuery(async () => (await db.settings.get("businessName"))?.value as string | undefined, []);
 
-  const partyMap = new Map((parties ?? []).map((p) => [p.id!, p]));
-  // Display from counterparty's perspective:
-  //   net > 0  → you owe overall (good standing for you, teal)
-  //   net < 0  → others owe you overall (their balance is negative, red)
-  const net = (allTxs ?? []).reduce((s, t) => s + (t.type === "got" ? t.amount : -t.amount), 0);
-  const totalGot = (allTxs ?? []).filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
-  const totalGave = (allTxs ?? []).filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
+  const partyMap = useMemo(() => new Map((parties ?? []).map((p) => [p.id!, p])), [parties]);
+  const { recentTxs, net, totalGot, totalGave } = useMemo(() => {
+    const all = allTxs ?? [];
+    const recentTxs = [...all].sort((a, b) => b.date - a.date).slice(0, 50);
+    // Display from counterparty's perspective:
+    //   net > 0  → you owe overall (good standing for you, teal)
+    //   net < 0  → others owe you overall (their balance is negative, red)
+    let net = 0;
+    let totalGot = 0;
+    let totalGave = 0;
+    for (const t of all) {
+      if (t.type === "got") { totalGot += t.amount; net += t.amount; }
+      else { totalGave += t.amount; net -= t.amount; }
+    }
+    return { recentTxs, net, totalGot, totalGave };
+  }, [allTxs]);
 
   function open(type: TxType) {
+    nativeLog("home:quick-tx", type);
     setPickerType(type);
-    setPickerOpen(true);
+    afterNativeFrame(() => setPickerOpen(true));
   }
 
   return (
@@ -52,7 +62,7 @@ function HomePage() {
           <p className="text-xs text-muted-foreground">Welcome back</p>
           <h1 className="text-lg font-semibold">{businessName || "My Business"}</h1>
         </div>
-        <Link to="/settings" className="rounded-full p-2 hover:bg-accent">
+        <Link to="/settings" preload={false} onClick={() => { clearRadixLocks(); nativeLog("nav:settings"); }} className="rounded-full p-2 hover:bg-accent">
           <SettingsIcon className="h-5 w-5" />
         </Link>
       </header>
@@ -91,13 +101,13 @@ function HomePage() {
       <section className="px-4 mt-4 grid grid-cols-2 gap-2.5">
         <Button
           onClick={() => open("gave")}
-          className="bg-danger hover:bg-danger/90 text-danger-foreground h-11 text-sm font-medium shadow-sm rounded-xl"
+              className="bg-danger hover:bg-danger/90 text-danger-foreground h-11 text-sm font-medium rounded-xl"
         >
           <ArrowUpRight className="mr-1 h-4 w-4" /> You Gave
         </Button>
         <Button
           onClick={() => open("got")}
-          className="bg-success hover:bg-success/90 text-success-foreground h-11 text-sm font-medium shadow-sm rounded-xl"
+              className="bg-success hover:bg-success/90 text-success-foreground h-11 text-sm font-medium rounded-xl"
         >
           <ArrowDownLeft className="mr-1 h-4 w-4" /> You Got
         </Button>
@@ -106,36 +116,14 @@ function HomePage() {
       <section className="px-4 mt-6">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold">Recent Transactions</h2>
-          <Link to="/parties" className="text-xs text-primary">View all</Link>
+          <Link to="/parties" preload={false} onClick={clearRadixLocks} className="text-xs text-primary">View all</Link>
         </div>
         <div className="space-y-2">
-          {(txs ?? []).map((t) => {
+          {recentTxs.map((t) => {
             const p = partyMap.get(t.partyId);
-            const isGot = t.type === "got";
-            return (
-              <Link
-                key={t.id}
-                to="/parties/$id"
-                params={{ id: String(t.partyId) }}
-                className="flex items-center gap-3 rounded-xl bg-card p-3 border border-border hover:bg-accent/50 transition-colors"
-              >
-                <Avatar className="h-10 w-10">
-                  {p?.photo && <AvatarImage src={p.photo} />}
-                  <AvatarFallback className="bg-primary/15 text-primary">
-                    {(p?.name ?? "?").slice(0, 1).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{p?.name ?? "Unknown"}</p>
-                  <p className="text-xs text-muted-foreground">{format(t.date, "MMM d, h:mm a")}{t.note ? ` · ${t.note}` : ""}</p>
-                </div>
-                <div className={cn("text-sm font-semibold tabular-nums", isGot ? "text-success" : "text-danger")}>
-                  {isGot ? "+" : "-"} {fmtMoney(t.amount).replace(/^[+\-]\s?/, "")}
-                </div>
-              </Link>
-            );
+            return <RecentTransactionRow key={t.id} transaction={t} partyName={p?.name} partyPhoto={p?.photo} />;
           })}
-          {(txs ?? []).length === 0 && (
+          {recentTxs.length === 0 && (
             <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
               No transactions yet. Tap "You Got" or "You Gave" to start.
             </div>
@@ -147,3 +135,30 @@ function HomePage() {
     </AppShell>
   );
 }
+
+const RecentTransactionRow = memo(function RecentTransactionRow({ transaction: t, partyName, partyPhoto }: { transaction: Transaction; partyName?: string; partyPhoto?: string }) {
+  const isGot = t.type === "got";
+  return (
+    <Link
+      to="/parties/$id"
+      params={{ id: String(t.partyId) }}
+      preload={false}
+      onClick={clearRadixLocks}
+      className="flex touch-manipulation items-center gap-3 rounded-xl bg-card p-3 border border-border hover:bg-accent/50"
+    >
+      <Avatar className="h-10 w-10">
+        {partyPhoto && <AvatarImage src={partyPhoto} />}
+        <AvatarFallback className="bg-primary/15 text-primary">
+          {(partyName ?? "?").slice(0, 1).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-sm truncate">{partyName ?? "Unknown"}</p>
+        <p className="text-xs text-muted-foreground">{format(t.date, "MMM d, h:mm a")}{t.note ? ` · ${t.note}` : ""}</p>
+      </div>
+      <div className={cn("text-sm font-semibold tabular-nums", isGot ? "text-success" : "text-danger")}>
+        {isGot ? "+" : "-"} {fmtMoney(t.amount).replace(/^[+\-]\s?/, "")}
+      </div>
+    </Link>
+  );
+});
