@@ -72,8 +72,8 @@ function SettingsPage() {
     try {
       await importFullBackup(f);
       toast.success("Backup restored");
-    } catch (err: any) {
-      toast.error(err.message ?? "Restore failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Restore failed");
     } finally {
       e.target.value = "";
     }
