@@ -119,6 +119,17 @@
     animation: none !important;
     transition-duration: 0s !important;
   }
+  body.keyboard-focus input,
+  body.keyboard-focus textarea,
+  body.keyboard-focus select,
+  body.keyboard-focus [role="dialog"] {
+    animation: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+  }
+  body.keyboard-open [data-hide-when-keyboard="true"] {
+    display: none !important;
+  }
 }
 
 @layer utilities {
