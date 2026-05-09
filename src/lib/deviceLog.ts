@@ -83,22 +83,23 @@ function ensureAlwaysOnLogPanel() {
     alwaysOnPanel.setAttribute("aria-live", "polite");
     Object.assign(alwaysOnPanel.style, {
       position: "fixed",
-      top: "0",
       left: "0",
       right: "0",
+      bottom: "0",
       zIndex: "2147483646",
-      maxHeight: "34vh",
+      maxHeight: "26vh",
       overflow: "hidden",
       pointerEvents: "none",
-      background: "rgba(2, 6, 23, 0.9)",
+      background: "rgba(2, 6, 23, 0.92)",
       color: "#e2e8f0",
-      font: "10px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace",
-      padding: "calc(env(safe-area-inset-top, 0px) + 6px) 8px 7px",
+      font: "10px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace",
+      padding: "4px 8px calc(env(safe-area-inset-bottom, 0px) + 4px)",
       boxSizing: "border-box",
-      borderBottom: "1px solid rgba(148, 163, 184, 0.45)",
-      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.28)",
+      borderTop: "1px solid rgba(148, 163, 184, 0.45)",
+      boxShadow: "0 -8px 24px rgba(0, 0, 0, 0.28)",
       whiteSpace: "pre-wrap",
       wordBreak: "break-word",
+      transition: "transform 0.18s ease",
     });
 
     const header = document.createElement("div");
@@ -115,10 +116,10 @@ function ensureAlwaysOnLogPanel() {
     fallbackCopyButton.textContent = "COPY";
     Object.assign(fallbackCopyButton.style, {
       position: "absolute",
-      top: "calc(env(safe-area-inset-top, 0px) + 6px)",
+      top: "2px",
       right: "8px",
-      height: "24px",
-      padding: "0 10px",
+      height: "22px",
+      padding: "0 8px",
       borderRadius: "4px",
       border: "1px solid rgba(148, 163, 184, 0.7)",
       background: "rgba(15, 23, 42, 0.95)",
@@ -132,15 +133,43 @@ function ensureAlwaysOnLogPanel() {
       copyDeviceLogText();
     });
 
+    const toggleButton = document.createElement("button");
+    toggleButton.type = "button";
+    toggleButton.textContent = "HIDE";
+    toggleButton.setAttribute("data-log-toggle", "true");
+    Object.assign(toggleButton.style, {
+      position: "absolute",
+      top: "2px",
+      right: "60px",
+      height: "22px",
+      padding: "0 8px",
+      borderRadius: "4px",
+      border: "1px solid rgba(148, 163, 184, 0.7)",
+      background: "rgba(15, 23, 42, 0.95)",
+      color: "#f8fafc",
+      font: "700 10px ui-monospace, SFMono-Regular, Menlo, monospace",
+      pointerEvents: "auto",
+    });
+    let collapsed = false;
+    toggleButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      collapsed = !collapsed;
+      toggleButton.textContent = collapsed ? "SHOW" : "HIDE";
+      if (alwaysOnBody) alwaysOnBody.style.display = collapsed ? "none" : "block";
+      if (alwaysOnPanel) alwaysOnPanel.style.maxHeight = collapsed ? "26px" : "26vh";
+    });
+
     alwaysOnBody = document.createElement("div");
     alwaysOnBody.setAttribute("data-log-body", "true");
     Object.assign(alwaysOnBody.style, {
       opacity: "0.92",
-      maxHeight: "calc(34vh - 24px)",
+      maxHeight: "calc(26vh - 26px)",
       overflow: "hidden",
     });
 
     alwaysOnPanel.appendChild(header);
+    alwaysOnPanel.appendChild(toggleButton);
     alwaysOnPanel.appendChild(fallbackCopyButton);
     alwaysOnPanel.appendChild(alwaysOnBody);
     document.body.appendChild(alwaysOnPanel);
@@ -160,20 +189,20 @@ function updateAlwaysOnLogPanel() {
 
   const header = alwaysOnPanel.querySelector("[data-log-header]") as HTMLDivElement | null;
   if (header) {
-    header.textContent = `DBG LOG ALWAYS ON · ${buffer.length} events · ${innerWidth}×${innerHeight}`;
+    header.textContent = `DBG · ${buffer.length} events`;
   }
 
-  const recent = buffer.slice(-9).reverse();
+  const recent = buffer.slice(-6).reverse();
   alwaysOnBody.textContent = recent.length
     ? recent
         .map((e) => {
           const ts = new Date(e.t).toISOString().slice(11, 23);
           const level = e.level === "error" ? "ERR" : e.level === "warn" ? "WRN" : "INF";
-          const detail = e.detail ? ` :: ${e.detail.slice(0, 220)}` : "";
+          const detail = e.detail ? ` :: ${e.detail.slice(0, 160)}` : "";
           return `${ts} ${level} ${e.name}${detail}`;
         })
         .join("\n")
-    : "Waiting for events...";
+    : "Waiting...";
 }
 
 function load() {
