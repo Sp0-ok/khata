@@ -21,6 +21,46 @@ let listeners = new Set<() => void>();
 let loaded = false;
 let alwaysOnPanel: HTMLDivElement | null = null;
 let alwaysOnBody: HTMLDivElement | null = null;
+let fallbackCopyButton: HTMLButtonElement | null = null;
+
+function formatDeviceLogText() {
+  const lines = buffer.map((e) => {
+    const ts = new Date(e.t).toISOString().slice(11, 23);
+    return `[${ts}] ${e.level.toUpperCase().padEnd(5)} ${e.name}${e.detail ? ` :: ${e.detail}` : ""}`;
+  });
+  return [
+    "KhataBook device log",
+    `When: ${new Date().toISOString()}`,
+    `UA: ${navigator.userAgent}`,
+    `Viewport: ${innerWidth}x${innerHeight} dpr=${devicePixelRatio}`,
+    `URL: ${location.href}`,
+    `Entries: ${buffer.length}`,
+    "--------",
+    ...lines,
+  ].join("\n");
+}
+
+async function copyDeviceLogText() {
+  const text = formatDeviceLogText();
+  try {
+    await navigator.clipboard.writeText(text);
+    devLog("always-log:copy", "ok");
+    return;
+  } catch {}
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    devLog("always-log:copy", ok ? "ok-fallback" : "fail", ok ? "info" : "warn");
+  } catch (e) {
+    devLog("always-log:copy", e, "warn");
+  }
+}
 
 function ensureAlwaysOnLogPanel() {
   if (typeof document === "undefined") return;
@@ -33,6 +73,7 @@ function ensureAlwaysOnLogPanel() {
     if (existing) {
       alwaysOnPanel = existing;
       alwaysOnBody = existing.querySelector("[data-log-body]") as HTMLDivElement | null;
+      fallbackCopyButton = existing.querySelector("button") as HTMLButtonElement | null;
       updateAlwaysOnLogPanel();
       return;
     }
@@ -66,6 +107,29 @@ function ensureAlwaysOnLogPanel() {
       color: "#f8fafc",
       fontWeight: "700",
       marginBottom: "3px",
+      paddingRight: "72px",
+    });
+
+    fallbackCopyButton = document.createElement("button");
+    fallbackCopyButton.type = "button";
+    fallbackCopyButton.textContent = "COPY";
+    Object.assign(fallbackCopyButton.style, {
+      position: "absolute",
+      top: "calc(env(safe-area-inset-top, 0px) + 6px)",
+      right: "8px",
+      height: "24px",
+      padding: "0 10px",
+      borderRadius: "4px",
+      border: "1px solid rgba(148, 163, 184, 0.7)",
+      background: "rgba(15, 23, 42, 0.95)",
+      color: "#f8fafc",
+      font: "700 10px ui-monospace, SFMono-Regular, Menlo, monospace",
+      pointerEvents: "auto",
+    });
+    fallbackCopyButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      copyDeviceLogText();
     });
 
     alwaysOnBody = document.createElement("div");
@@ -77,6 +141,7 @@ function ensureAlwaysOnLogPanel() {
     });
 
     alwaysOnPanel.appendChild(header);
+    alwaysOnPanel.appendChild(fallbackCopyButton);
     alwaysOnPanel.appendChild(alwaysOnBody);
     document.body.appendChild(alwaysOnPanel);
     updateAlwaysOnLogPanel();

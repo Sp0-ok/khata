@@ -11,7 +11,6 @@ import { loadCurrency } from "./lib/format";
 import { Toaster } from "./components/ui/sonner";
 import { clearRadixLocks, installAndroidFreezeWatchdog, nativeLog } from "./lib/androidStability";
 import { installDeviceLogListeners, devLog, openDebugOverlay } from "./lib/deviceLog";
-import { DebugOverlay } from "./components/DebugOverlay";
 import { OnboardingGate } from "./components/OnboardingGate";
 import "./styles.css";
 
@@ -51,6 +50,5 @@ createRoot(el).render(
       <RouterProvider router={router} />
     </OnboardingGate>
     <Toaster richColors position="top-center" />
-    <DebugOverlay />
   </QueryClientProvider>,
 );
