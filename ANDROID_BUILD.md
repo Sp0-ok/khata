@@ -49,24 +49,23 @@ For a signed release APK, follow Android Studio's
 
 ## Required Android permissions
 
-KhataBook saves CSV / PDF / JSON-backup exports into the device's
-`Downloads/Khata/` folder (with `Documents/Khata/` as a fallback) using the
-Capacitor Filesystem plugin.
+KhataBook uses **modern scoped storage** (Android 10+ / API 29+, fully
+compatible with Android 13 & 14). CSV / PDF / JSON exports are written into
+the app's own `Documents/Khata/` folder (no permission required) and the
+system **Share sheet** is then opened so the user can save the file to
+`Downloads`, Drive, email, etc. via Android's Storage Access Framework.
 
-Add these inside `<manifest>` in
-`android/app/src/main/AndroidManifest.xml` **before the first `<application>`
-tag** (Capacitor only adds INTERNET by default):
+Because of this, **no storage permissions are required** in
+`AndroidManifest.xml` — the only permission Capacitor adds (`INTERNET`) is
+enough. Do **not** add `WRITE_EXTERNAL_STORAGE` / `READ_EXTERNAL_STORAGE`
+or `MANAGE_EXTERNAL_STORAGE`; they are deprecated/forbidden on modern
+Android and Play Store will reject them.
 
-```xml
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-    android:maxSdkVersion="29" />
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-    android:maxSdkVersion="32" />
-```
+Capacitor plugins used:
 
-On Android 10+ scoped storage is used automatically — no runtime prompt is
-required. Files appear in the user's file manager under
-`Internal storage → Download → Khata` (or `Documents → Khata`).
+- `@capacitor/filesystem` — writes to app-scoped storage
+- `@capacitor/share` — opens the SAF "Save to…" sheet so the user picks the
+  final destination (Downloads, Drive, etc.)
 
 ## App icon & splash
 
