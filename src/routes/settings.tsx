@@ -3,7 +3,6 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { LocalInput } from "@/components/ui/local-input";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -98,7 +97,7 @@ function SettingsPage() {
           <p className="text-xs font-semibold uppercase text-muted-foreground">Business Profile</p>
           <div>
             <Label>Business / Profile name</Label>
-            <LocalInput value={businessName} onValueChange={setBusinessName} placeholder="My Business" />
+            <Input value={businessName} onChange={(event) => setBusinessName(event.target.value)} placeholder="My Business" />
           </div>
           <div>
             <Label>Logo</Label>
