@@ -89,7 +89,7 @@ function ensureAlwaysOnLogPanel() {
       zIndex: "2147483646",
       maxHeight: "34vh",
       overflow: "hidden",
-      pointerEvents: "auto",
+      pointerEvents: "none",
       background: "rgba(2, 6, 23, 0.9)",
       color: "#e2e8f0",
       font: "10px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace",
@@ -124,6 +124,7 @@ function ensureAlwaysOnLogPanel() {
       background: "rgba(15, 23, 42, 0.95)",
       color: "#f8fafc",
       font: "700 10px ui-monospace, SFMono-Regular, Menlo, monospace",
+      pointerEvents: "auto",
     });
     fallbackCopyButton.addEventListener("click", (e) => {
       e.preventDefault();
