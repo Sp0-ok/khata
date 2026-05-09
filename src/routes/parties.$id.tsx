@@ -217,9 +217,9 @@ function PartyDetail() {
 
       {/* Sticky action bar */}
       <div className="fixed bottom-16 inset-x-0 z-30 px-4 pb-2 pointer-events-none">
-        <div className="mx-auto max-w-md grid grid-cols-2 gap-3 pointer-events-auto">
-          <Button onClick={() => newTx("gave")} className="bg-danger hover:bg-danger/90 text-danger-foreground h-12 shadow-lg">You Gave</Button>
-          <Button onClick={() => newTx("got")} className="bg-success hover:bg-success/90 text-success-foreground h-12 shadow-lg">You Got</Button>
+        <div className="mx-auto max-w-md grid grid-cols-2 gap-2.5 pointer-events-auto">
+          <Button onClick={() => newTx("gave")} className="bg-danger hover:bg-danger/90 text-danger-foreground h-11 text-sm font-medium shadow-md rounded-xl">You Gave</Button>
+          <Button onClick={() => newTx("got")} className="bg-success hover:bg-success/90 text-success-foreground h-11 text-sm font-medium shadow-md rounded-xl">You Got</Button>
         </div>
       </div>
 
@@ -231,6 +231,45 @@ function PartyDetail() {
         existing={editingTx}
       />
       <PartyDialog open={editParty} onOpenChange={setEditParty} existing={party} />
+
+      <AlertDialog open={confirmEditParty} onOpenChange={setConfirmEditParty}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit this party?</AlertDialogTitle>
+            <AlertDialogDescription>You're about to modify {party.name}'s details.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmEditParty(false); setEditParty(true); }}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmEditTx} onOpenChange={(v) => !v && setConfirmEditTx(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit this entry?</AlertDialogTitle>
+            <AlertDialogDescription>You're about to modify a transaction of {confirmEditTx ? fmtMoney(confirmEditTx.amount) : ""}.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (confirmEditTx) { setEditingTx(confirmEditTx); setTxOpen(true); } setConfirmEditTx(null); }}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmDeleteTx} onOpenChange={(v) => !v && setConfirmDeleteTx(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently remove this transaction.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => { if (confirmDeleteTx?.id) await deleteTx(confirmDeleteTx.id); setConfirmDeleteTx(null); }} className="bg-danger hover:bg-danger/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
