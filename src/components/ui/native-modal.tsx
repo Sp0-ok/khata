@@ -28,13 +28,13 @@ export function NativeModal({ open, title, children, footer, onOpenChange, class
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-foreground/35" role="presentation">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-foreground/35 px-3 py-3" role="presentation">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="native-modal-title"
         className={cn(
-          "fixed inset-x-3 top-[max(env(safe-area-inset-top),0.75rem)] max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto rounded-lg border bg-background p-4 text-foreground shadow-sm",
+          "relative mx-auto mb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] mt-[max(env(safe-area-inset-top),0.75rem)] rounded-lg border bg-background p-4 text-foreground shadow-sm",
           className,
         )}
       >
