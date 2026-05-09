@@ -6,23 +6,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, ArrowDownLeft, ArrowUpRight, Edit2, FileDown, FileUp, FileText, Phone, Trash2, MoreVertical, Search, ArrowUpDown } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { memo, useMemo, useRef, useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { PartyDialog } from "./parties.index";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NativeConfirm, NativeModal } from "@/components/ui/native-modal";
 import { fmtMoney } from "@/lib/format";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { exportPartyCSV, exportPartyPDF, importPartyCSV } from "@/lib/exporters";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { afterNativeFrame, clearRadixLocks, nativeLog, withNativeTimeout } from "@/lib/androidStability";
 
 export const Route = createFileRoute("/parties/$id")({
   component: PartyDetail,
