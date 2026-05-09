@@ -163,8 +163,6 @@ export function devLog(name: string, detail?: unknown, level: LogLevel = "info")
 
 export function getDeviceLog(): DeviceLogEntry[] {
   load();
-  if (snapshot !== buffer && snapshot.length === buffer.length) return snapshot;
-  if (snapshot.length !== buffer.length) snapshot = buffer.slice();
   return snapshot;
 }
 
