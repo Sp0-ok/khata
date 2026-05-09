@@ -14,7 +14,7 @@ import { fileToDataURL } from "@/lib/exporters";
 import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/parties")({
+export const Route = createFileRoute("/parties/")({
   component: PartiesPage,
   head: () => ({
     meta: [

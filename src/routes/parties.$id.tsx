@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Edit2, FileDown, FileUp, FileText, Phone, Trash2, MoreVertical, Search } from "lucide-react";
 import { useRef, useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
-import { PartyDialog } from "./parties";
+import { PartyDialog } from "./parties.index";
 import { fmtMoney } from "@/lib/format";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -141,18 +141,27 @@ function PartyDetail() {
       </header>
 
       <section className="px-4">
-        <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-4 shadow-lg">
-          <p className="text-xs uppercase opacity-80">Net Balance</p>
-          <p className={cn("text-2xl font-bold mt-1 tabular-nums", net < 0 && "text-red-200", net > 0 && "text-emerald-100")}>
+        <div
+          className={cn(
+            "rounded-2xl text-primary-foreground p-4 shadow-lg transition-colors",
+            net < 0
+              ? "bg-gradient-to-br from-rose-500 to-red-700"
+              : net > 0
+              ? "bg-gradient-to-br from-emerald-500 to-teal-700"
+              : "bg-gradient-to-br from-primary to-primary/80"
+          )}
+        >
+          <p className="text-xs uppercase opacity-90">Net Balance</p>
+          <p className="text-2xl font-bold mt-1 tabular-nums text-white">
             {fmtMoney(net, true)}
           </p>
           <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-            <div className="rounded-lg bg-white/10 p-2 backdrop-blur">
-              <p className="text-[10px] uppercase opacity-80">You Got</p>
+            <div className="rounded-lg bg-white/15 p-2 backdrop-blur">
+              <p className="text-[10px] uppercase opacity-90">You Got</p>
               <p className="font-semibold">{fmtMoney(totalGot)}</p>
             </div>
-            <div className="rounded-lg bg-white/10 p-2 backdrop-blur">
-              <p className="text-[10px] uppercase opacity-80">You Gave</p>
+            <div className="rounded-lg bg-white/15 p-2 backdrop-blur">
+              <p className="text-[10px] uppercase opacity-90">You Gave</p>
               <p className="font-semibold">{fmtMoney(totalGave)}</p>
             </div>
           </div>
