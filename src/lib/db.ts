@@ -21,6 +21,7 @@ export interface Transaction {
   receipt?: string; // dataURL
   date: number; // timestamp (ms)
   createdAt: number;
+  updatedAt?: number;
 }
 
 export interface SettingRecord {
