@@ -21,7 +21,7 @@ export function NativeModal({ open, title, children, footer, onOpenChange, class
         aria-modal="true"
         aria-labelledby="native-modal-title"
         className={cn(
-          "relative mx-auto mb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] mt-[max(env(safe-area-inset-top),0.75rem)] max-h-[calc(100vh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto rounded-lg border bg-background p-4 text-foreground shadow-sm",
+          "relative mx-auto my-3 max-h-[calc(100vh-1.5rem)] overflow-y-auto rounded-lg border bg-background p-4 text-foreground shadow-sm",
           className,
         )}
       >
