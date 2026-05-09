@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && vite build --config vite.spa.config.ts && node scripts/postbuild-spa-html.mjs",
-    "build:dev": "vite build --mode development && vite build --mode development --config vite.spa.config.ts && node scripts/postbuild-spa-html.mjs",
+    "build": "vite build && vite build --config vite.spa.config.ts && node scripts/postbuild-spa-html.mjs && node scripts/patch-android-keyboard.mjs",
+    "build:dev": "vite build --mode development && vite build --mode development --config vite.spa.config.ts && node scripts/postbuild-spa-html.mjs && node scripts/patch-android-keyboard.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."
