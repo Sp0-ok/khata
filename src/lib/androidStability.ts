@@ -14,6 +14,7 @@ export function nativeLog(name: string, detail?: unknown, level: EventLevel = "i
 }
 
 export async function withNativeTimeout<T>(label: string, work: Promise<T>, ms = 8000): Promise<T> {
+  devLog(`work:start`, label);
   const started = performance.now();
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
