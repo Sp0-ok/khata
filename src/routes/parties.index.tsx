@@ -10,7 +10,6 @@ import { Plus, Search, ArrowLeft } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { NativeModal } from "@/components/ui/native-modal";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { fileToDataURL } from "@/lib/fileData";
 import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";

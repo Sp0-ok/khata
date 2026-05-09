@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { LocalInput, LocalTextarea } from "@/components/ui/local-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { db, type Transaction, type TxType } from "@/lib/db";
 import { fileToDataURL } from "@/lib/fileData";
 import { groupAmount, unformatAmount } from "@/lib/format";

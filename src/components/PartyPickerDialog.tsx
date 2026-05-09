@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { NativeModal } from "@/components/ui/native-modal";
+import { LocalInput } from "@/components/ui/local-input";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -57,11 +58,11 @@ export const PartyPickerDialog = memo(function PartyPickerDialog({
   return (
     <>
       <NativeModal open={open && pickedId === null} onOpenChange={onOpenChange} title="Select Party" className="max-w-sm">
-          <input
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-base shadow-sm outline-none focus:ring-1 focus:ring-ring"
+          <LocalInput
+            className="bg-background outline-none focus:ring-1 focus:ring-ring"
             placeholder="Search…"
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onValueChange={setQ}
           />
           <div className="keyboard-scroll h-72 -mx-2">
             {filtered.map((p) => (
@@ -89,11 +90,11 @@ export const PartyPickerDialog = memo(function PartyPickerDialog({
           <div className="border-t border-border pt-3 space-y-2">
             <p className="text-xs text-muted-foreground">Or quick add a new party</p>
             <div className="flex gap-2">
-              <input
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-base shadow-sm outline-none focus:ring-1 focus:ring-ring"
+              <LocalInput
+                className="bg-background outline-none focus:ring-1 focus:ring-ring"
                 placeholder="New party name"
                 value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+                onValueChange={setNewName}
               />
               <Button onClick={quickCreate} disabled={!newName.trim()}>
                 <Plus className="h-4 w-4" />
