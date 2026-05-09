@@ -75,7 +75,7 @@ async function copyText(text: string) {
 }
 
 export function DebugOverlay() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const entries = useDeviceLog();
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 

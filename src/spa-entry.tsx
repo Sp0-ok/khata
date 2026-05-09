@@ -10,15 +10,14 @@ import { applyStoredTheme } from "./lib/theme";
 import { loadCurrency } from "./lib/format";
 import { Toaster } from "./components/ui/sonner";
 import { clearRadixLocks, installAndroidFreezeWatchdog, nativeLog } from "./lib/androidStability";
-import { installAndroidKeyboardWorkaround } from "./lib/androidKeyboard";
 import { installDeviceLogListeners, devLog, openDebugOverlay } from "./lib/deviceLog";
 import { OnboardingGate } from "./components/OnboardingGate";
+import { DebugOverlay } from "./components/DebugOverlay";
 import "./styles.css";
 
 // Bring up persistent on-device logging FIRST so we capture everything,
 // including bootstrap errors.
 installDeviceLogListeners();
-installAndroidKeyboardWorkaround();
 
 // Surface any uncaught error inside the WebView instead of freezing silently.
 function showFatal(msg: string) {
@@ -51,6 +50,7 @@ createRoot(el).render(
     <OnboardingGate>
       <RouterProvider router={router} />
     </OnboardingGate>
+    <DebugOverlay />
     <Toaster richColors position="top-center" />
   </QueryClientProvider>,
 );
