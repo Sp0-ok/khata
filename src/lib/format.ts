@@ -20,6 +20,34 @@ export function fmtMoney(n: number, sign = false) {
   return `${prefix}${_currency}${sep}${s}`;
 }
 
+// Currencies that use the Indian numbering system (1,00,000 = 1 Lakh)
+const INDIAN_GROUPING = new Set(["₨", "₹"]);
+
+export function groupAmount(raw: string): string {
+  // raw: digits and optional single dot
+  const cleaned = raw.replace(/[^0-9.]/g, "");
+  const [intRaw = "", decRaw] = cleaned.split(".");
+  const intPart = intRaw.replace(/^0+(?=\d)/, "");
+  if (!intPart && decRaw === undefined) return "";
+  let grouped: string;
+  if (INDIAN_GROUPING.has(_currency)) {
+    if (intPart.length <= 3) grouped = intPart;
+    else {
+      const last3 = intPart.slice(-3);
+      const rest = intPart.slice(0, -3);
+      grouped = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + "," + last3;
+    }
+  } else {
+    grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  if (decRaw === undefined) return grouped || "0";
+  return (grouped || "0") + "." + decRaw.slice(0, 2);
+}
+
+export function unformatAmount(s: string): string {
+  return s.replace(/,/g, "");
+}
+
 export function fmtCompact(n: number) {
   const abs = Math.abs(n);
   let s: string;
