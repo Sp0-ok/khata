@@ -73,6 +73,7 @@ function ensureAlwaysOnLogPanel() {
     if (existing) {
       alwaysOnPanel = existing;
       alwaysOnBody = existing.querySelector("[data-log-body]") as HTMLDivElement | null;
+      fallbackCopyButton = existing.querySelector("button") as HTMLButtonElement | null;
       updateAlwaysOnLogPanel();
       return;
     }
