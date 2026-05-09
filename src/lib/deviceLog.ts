@@ -17,7 +17,7 @@ const ALWAYS_ON_LOG_ID = "__khata_always_on_devlog";
 
 let buffer: DeviceLogEntry[] = [];
 let snapshot: DeviceLogEntry[] = buffer;
-let listeners = new Set<() => void>();
+const listeners = new Set<() => void>();
 let loaded = false;
 let alwaysOnPanel: HTMLDivElement | null = null;
 let alwaysOnBody: HTMLDivElement | null = null;
@@ -46,7 +46,9 @@ async function copyDeviceLogText() {
     await navigator.clipboard.writeText(text);
     devLog("always-log:copy", "ok");
     return;
-  } catch {}
+  } catch {
+    // Clipboard APIs are optional inside Android WebView.
+  }
   try {
     const ta = document.createElement("textarea");
     ta.value = text;
@@ -182,9 +184,6 @@ function ensureAlwaysOnLogPanel() {
 
 function updateAlwaysOnLogPanel() {
   if (typeof window === "undefined" || typeof document === "undefined") return;
-  if (!alwaysOnPanel || !document.documentElement.contains(alwaysOnPanel)) {
-    ensureAlwaysOnLogPanel();
-  }
   if (!alwaysOnPanel || !alwaysOnBody) return;
 
   const header = alwaysOnPanel.querySelector("[data-log-header]") as HTMLDivElement | null;
@@ -212,9 +211,14 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) { buffer = parsed.slice(-MAX_ENTRIES); snapshot = buffer.slice(); }
+      if (Array.isArray(parsed)) {
+        buffer = parsed.slice(-MAX_ENTRIES);
+        snapshot = buffer.slice();
+      }
     }
-  } catch {}
+  } catch {
+    // Ignore malformed stored debug logs.
+  }
 }
 
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -225,7 +229,9 @@ function scheduleSave() {
     saveTimer = undefined;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(buffer));
-    } catch {}
+    } catch {
+      // Logging must never interrupt the app.
+    }
   }, 250);
 }
 
@@ -249,7 +255,11 @@ export function devLog(name: string, detail?: unknown, level: LogLevel = "info")
   updateAlwaysOnLogPanel();
   scheduleSave();
   listeners.forEach((l) => {
-    try { l(); } catch {}
+    try {
+      l();
+    } catch {
+      // Subscriber failures should not break logging.
+    }
   });
   if (level === "error") console.error("[devlog]", name, entry.detail ?? "");
   else if (level === "warn") console.warn("[devlog]", name, entry.detail ?? "");
@@ -263,8 +273,11 @@ export function getDeviceLog(): DeviceLogEntry[] {
 export function clearDeviceLog() {
   buffer = [];
   snapshot = buffer;
-  try { localStorage.removeItem(STORAGE_KEY); } catch {}
-  updateAlwaysOnLogPanel();
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Storage can be unavailable in restricted WebViews.
+  }
   listeners.forEach((l) => l());
 }
 
@@ -285,7 +298,6 @@ export function installDeviceLogListeners() {
   if (installed || typeof window === "undefined") return;
   installed = true;
   load();
-  ensureAlwaysOnLogPanel();
   devLog("app:start", { ua: navigator.userAgent, w: innerWidth, h: innerHeight });
 
   window.addEventListener("error", (e) => {
@@ -293,8 +305,8 @@ export function installDeviceLogListeners() {
     openDebugOverlay();
   });
   window.addEventListener("unhandledrejection", (e: PromiseRejectionEvent) => {
-    const r: any = e.reason;
-    devLog("window:unhandledrejection", r?.stack || r?.message || r, "error");
+    const r = e.reason;
+    devLog("window:unhandledrejection", r instanceof Error ? r.stack || r.message : r, "error");
     openDebugOverlay();
   });
   document.addEventListener("visibilitychange", () => {
@@ -311,7 +323,10 @@ export function installDeviceLogListeners() {
       if (!t) return;
       const tag = t.tagName?.toLowerCase();
       const id = t.id ? `#${t.id}` : "";
-      const cls = typeof t.className === "string" && t.className ? `.${t.className.split(/\s+/).slice(0, 2).join(".")}` : "";
+      const cls =
+        typeof t.className === "string" && t.className
+          ? `.${t.className.split(/\s+/).slice(0, 2).join(".")}`
+          : "";
       devLog("tap", `${tag}${id}${cls}`.slice(0, 120));
     },
     { passive: true, capture: true },

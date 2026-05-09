@@ -75,7 +75,7 @@ async function copyText(text: string) {
 }
 
 export function DebugOverlay() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const entries = useDeviceLog();
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -142,7 +142,9 @@ export function DebugOverlay() {
             font: "12px ui-monospace,SFMono-Regular,Menlo,monospace",
           }}
         >
-          <div style={{ display: "flex", gap: 6, padding: 8, background: "#0f172a", flexWrap: "wrap" }}>
+          <div
+            style={{ display: "flex", gap: 6, padding: 8, background: "#0f172a", flexWrap: "wrap" }}
+          >
             <strong style={{ flex: 1, fontSize: 13 }}>Device Log ({entries.length})</strong>
             <button
               style={btnStyle}

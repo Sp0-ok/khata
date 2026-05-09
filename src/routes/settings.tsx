@@ -3,7 +3,6 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { LocalInput } from "@/components/ui/local-input";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -54,11 +53,14 @@ function SettingsPage() {
   }, []);
 
   async function saveProfile() {
-    await withNativeTimeout("settings:save", Promise.all([
-      setSetting("businessName", businessName),
-      setSetting("logo", logo),
-      setSetting("currency", cur),
-    ]));
+    await withNativeTimeout(
+      "settings:save",
+      Promise.all([
+        setSetting("businessName", businessName),
+        setSetting("logo", logo),
+        setSetting("currency", cur),
+      ]),
+    );
     setCurrencySync(cur);
     nativeLog("settings:saved");
     toast.success("Saved");
@@ -70,8 +72,8 @@ function SettingsPage() {
     try {
       await importFullBackup(f);
       toast.success("Backup restored");
-    } catch (err: any) {
-      toast.error(err.message ?? "Restore failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Restore failed");
     } finally {
       e.target.value = "";
     }
@@ -79,17 +81,27 @@ function SettingsPage() {
 
   async function clearAll() {
     if (!confirm("Delete ALL parties and transactions? This cannot be undone.")) return;
-    await withNativeTimeout("settings:clear-all", db.transaction("rw", db.parties, db.transactions, async () => {
-      await db.parties.clear();
-      await db.transactions.clear();
-    }));
+    await withNativeTimeout(
+      "settings:clear-all",
+      db.transaction("rw", db.parties, db.transactions, async () => {
+        await db.parties.clear();
+        await db.transactions.clear();
+      }),
+    );
     toast.success("All data cleared");
   }
 
   return (
     <AppShell>
       <header className="flex items-center gap-2 px-4 pt-5 pb-3">
-        <Link to="/" preload={false} onClick={clearRadixLocks} className="rounded-full p-1.5 hover:bg-accent"><ArrowLeft className="h-5 w-5" /></Link>
+        <Link
+          to="/"
+          preload={false}
+          onClick={clearRadixLocks}
+          className="rounded-full p-1.5 hover:bg-accent"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
         <h1 className="text-xl font-bold">Settings</h1>
       </header>
 
@@ -98,7 +110,11 @@ function SettingsPage() {
           <p className="text-xs font-semibold uppercase text-muted-foreground">Business Profile</p>
           <div>
             <Label>Business / Profile name</Label>
-            <LocalInput value={businessName} onValueChange={setBusinessName} placeholder="My Business" />
+            <Input
+              value={businessName}
+              onChange={(event) => setBusinessName(event.target.value)}
+              placeholder="My Business"
+            />
           </div>
           <div>
             <Label>Logo</Label>
@@ -121,10 +137,16 @@ function SettingsPage() {
               onChange={(e) => setCur(e.target.value)}
               className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-base text-foreground"
             >
-              {CURRENCIES.map((c) => <option key={c.sym} value={c.sym}>{c.label}</option>)}
+              {CURRENCIES.map((c) => (
+                <option key={c.sym} value={c.sym}>
+                  {c.label}
+                </option>
+              ))}
             </select>
           </div>
-          <Button onClick={saveProfile} className="w-full">Save</Button>
+          <Button onClick={saveProfile} className="w-full">
+            Save
+          </Button>
         </Card>
 
         <Card className="p-4">
@@ -136,7 +158,11 @@ function SettingsPage() {
             <input
               type="checkbox"
               checked={dark}
-              onChange={(e) => { const v = e.target.checked; setDark(v); setTheme(v ? "dark" : "light"); }}
+              onChange={(e) => {
+                const v = e.target.checked;
+                setDark(v);
+                setTheme(v ? "dark" : "light");
+              }}
               className="h-5 w-9 accent-primary"
             />
           </div>
@@ -144,18 +170,38 @@ function SettingsPage() {
 
         <Card className="p-4 space-y-3">
           <p className="text-xs font-semibold uppercase text-muted-foreground">Backup & Restore</p>
-          <p className="text-xs text-muted-foreground">All data lives on this device. Export a backup file to keep it safe.</p>
+          <p className="text-xs text-muted-foreground">
+            All data lives on this device. Export a backup file to keep it safe.
+          </p>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={exportFullBackup}><Download className="h-4 w-4 mr-2" />Export</Button>
-            <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-2" />Import</Button>
+            <Button variant="outline" onClick={exportFullBackup}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button variant="outline" onClick={() => fileRef.current?.click()}>
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
           </div>
-          <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={handleImport} />
-          <Button variant="outline" className="w-full text-danger border-danger/40 hover:bg-danger/10" onClick={clearAll}>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json,application/json"
+            hidden
+            onChange={handleImport}
+          />
+          <Button
+            variant="outline"
+            className="w-full text-danger border-danger/40 hover:bg-danger/10"
+            onClick={clearAll}
+          >
             Clear all data
           </Button>
         </Card>
 
-        <p className="text-center text-xs text-muted-foreground py-4">KhataBook · Local-first · v1.0</p>
+        <p className="text-center text-xs text-muted-foreground py-4">
+          KhataBook · Local-first · v1.0
+        </p>
       </div>
     </AppShell>
   );

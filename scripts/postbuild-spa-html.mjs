@@ -6,8 +6,13 @@
 //   dist/client/assets/*.css
 // The TanStack SSR worker bundle is unaffected — it lives in dist/server.
 import {
-  readdirSync, readFileSync, writeFileSync, existsSync,
-  mkdirSync, copyFileSync, rmSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  copyFileSync,
+  rmSync,
 } from "node:fs";
 import { join } from "node:path";
 
@@ -41,7 +46,7 @@ const html = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, height=device-height, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0d9488" />
     <title>KhataBook</title>
     <meta name="description" content="Local-first bookkeeping for parties, transactions, and balances." />
@@ -59,4 +64,6 @@ writeFileSync(join(clientDir, "index.html"), html);
 // Clean up the intermediate spa/ folder so Capacitor doesn't ship duplicates.
 rmSync(spaDir, { recursive: true, force: true });
 
-console.log(`[postbuild] Wrote ${clientDir}/index.html (entry: ${entryJs}${cssFile ? `, css: ${cssFile}` : ""})`);
+console.log(
+  `[postbuild] Wrote ${clientDir}/index.html (entry: ${entryJs}${cssFile ? `, css: ${cssFile}` : ""})`,
+);

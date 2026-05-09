@@ -10,15 +10,14 @@ import { applyStoredTheme } from "./lib/theme";
 import { loadCurrency } from "./lib/format";
 import { Toaster } from "./components/ui/sonner";
 import { clearRadixLocks, installAndroidFreezeWatchdog, nativeLog } from "./lib/androidStability";
-import { installAndroidKeyboardWorkaround } from "./lib/androidKeyboard";
 import { installDeviceLogListeners, devLog, openDebugOverlay } from "./lib/deviceLog";
 import { OnboardingGate } from "./components/OnboardingGate";
+import { DebugOverlay } from "./components/DebugOverlay";
 import "./styles.css";
 
 // Bring up persistent on-device logging FIRST so we capture everything,
 // including bootstrap errors.
 installDeviceLogListeners();
-installAndroidKeyboardWorkaround();
 
 // Surface any uncaught error inside the WebView instead of freezing silently.
 function showFatal(msg: string) {
@@ -29,16 +28,29 @@ function showFatal(msg: string) {
     if (root && !root.hasChildNodes()) {
       root.innerHTML = `<div style="padding:16px;font:14px/1.4 system-ui;color:#b91c1c;white-space:pre-wrap;word-break:break-word">App error:\n${msg}</div>`;
     }
-  } catch {}
+  } catch {
+    // Last-resort error UI must never throw.
+  }
 }
-window.addEventListener("error", (e) => showFatal(String(e.error?.stack || e.error?.message || e.message)));
-window.addEventListener("unhandledrejection", (e) => showFatal(String((e.reason as any)?.stack || (e.reason as any)?.message || e.reason)));
+window.addEventListener("error", (e) =>
+  showFatal(String(e.error?.stack || e.error?.message || e.message)),
+);
+window.addEventListener("unhandledrejection", (e) => {
+  const reason = e.reason;
+  showFatal(String(reason instanceof Error ? reason.stack || reason.message : reason));
+});
 
 const router = getRouter();
 const queryClient = router.options.context!.queryClient;
 installAndroidFreezeWatchdog();
-router.subscribe("onBeforeNavigate", () => { clearRadixLocks(); nativeLog("nav:before", location.pathname); });
-router.subscribe("onLoad", () => { clearRadixLocks(); nativeLog("nav:loaded", location.pathname); });
+router.subscribe("onBeforeNavigate", () => {
+  clearRadixLocks();
+  nativeLog("nav:before", location.pathname);
+});
+router.subscribe("onLoad", () => {
+  clearRadixLocks();
+  nativeLog("nav:loaded", location.pathname);
+});
 
 applyStoredTheme();
 loadCurrency();
@@ -51,6 +63,7 @@ createRoot(el).render(
     <OnboardingGate>
       <RouterProvider router={router} />
     </OnboardingGate>
+    <DebugOverlay />
     <Toaster richColors position="top-center" />
   </QueryClientProvider>,
 );

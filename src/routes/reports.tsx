@@ -4,9 +4,16 @@ import { db } from "@/lib/db";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { LocalInput } from "@/components/ui/local-input";
 import { useState, useMemo } from "react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { format, subDays } from "date-fns";
 import { fmtMoney, fmtCompact } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -32,7 +39,9 @@ const RANGES = [
 
 function ReportsPage() {
   const [range, setRange] = useState<(typeof RANGES)[number]["key"]>("3m");
-  const [customFrom, setCustomFrom] = useState<string>(() => format(subDays(new Date(), 30), "yyyy-MM-dd"));
+  const [customFrom, setCustomFrom] = useState<string>(() =>
+    format(subDays(new Date(), 30), "yyyy-MM-dd"),
+  );
   const [customTo, setCustomTo] = useState<string>(() => format(new Date(), "yyyy-MM-dd"));
   const txs = useLiveQuery(() => db.transactions.toArray(), []);
 
@@ -95,7 +104,9 @@ function ReportsPage() {
             onClick={() => setRange(r.key)}
             className={cn(
               "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap",
-              range === r.key ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:text-foreground"
+              range === r.key
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card border-border text-muted-foreground hover:text-foreground",
             )}
           >
             {r.label}
@@ -107,11 +118,23 @@ function ReportsPage() {
         <div className="px-4 mt-3 flex items-end gap-2">
           <div className="flex-1">
             <label className="text-[10px] uppercase text-muted-foreground">From</label>
-            <LocalInput type="date" value={customFrom} max={customTo} onValueChange={setCustomFrom} className="h-9" />
+            <Input
+              type="date"
+              value={customFrom}
+              max={customTo}
+              onChange={(event) => setCustomFrom(event.target.value)}
+              className="h-9"
+            />
           </div>
           <div className="flex-1">
             <label className="text-[10px] uppercase text-muted-foreground">To</label>
-            <LocalInput type="date" value={customTo} min={customFrom} onValueChange={setCustomTo} className="h-9" />
+            <Input
+              type="date"
+              value={customTo}
+              min={customFrom}
+              onChange={(event) => setCustomTo(event.target.value)}
+              className="h-9"
+            />
           </div>
         </div>
       )}
@@ -119,15 +142,26 @@ function ReportsPage() {
       <section className="px-4 mt-4 grid grid-cols-3 gap-2">
         <Card className="p-3">
           <p className="text-[10px] uppercase text-muted-foreground">Got</p>
-          <p className="font-semibold text-success text-sm tabular-nums mt-1">{fmtMoney(totalGot)}</p>
+          <p className="font-semibold text-success text-sm tabular-nums mt-1">
+            {fmtMoney(totalGot)}
+          </p>
         </Card>
         <Card className="p-3">
           <p className="text-[10px] uppercase text-muted-foreground">Gave</p>
-          <p className="font-semibold text-danger text-sm tabular-nums mt-1">{fmtMoney(totalGave)}</p>
+          <p className="font-semibold text-danger text-sm tabular-nums mt-1">
+            {fmtMoney(totalGave)}
+          </p>
         </Card>
         <Card className="p-3">
           <p className="text-[10px] uppercase text-muted-foreground">Net</p>
-          <p className={cn("font-semibold text-sm tabular-nums mt-1", net < 0 ? "text-danger" : "text-success")}>{fmtMoney(net, true)}</p>
+          <p
+            className={cn(
+              "font-semibold text-sm tabular-nums mt-1",
+              net < 0 ? "text-danger" : "text-success",
+            )}
+          >
+            {fmtMoney(net, true)}
+          </p>
         </Card>
       </section>
 
@@ -184,7 +218,10 @@ function ReportsPage() {
                     fontSize: 12,
                     boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                   }}
-                  formatter={(v: any, name: any) => [fmtMoney(Number(v) || 0), name === "Got" ? "In" : "Out"]}
+                  formatter={(v: unknown, name: unknown) => [
+                    fmtMoney(Number(v) || 0),
+                    name === "Got" ? "In" : "Out",
+                  ]}
                 />
                 <Area
                   type="monotone"
