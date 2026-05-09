@@ -3,8 +3,9 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format, subDays } from "date-fns";
 import { fmtMoney, fmtCompact } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -25,24 +26,33 @@ const RANGES = [
   { key: "6m", label: "6M", days: 180 },
   { key: "1y", label: "1Y", days: 365 },
   { key: "all", label: "All", days: 0 },
+  { key: "custom", label: "Custom", days: -1 },
 ] as const;
 
 function ReportsPage() {
   const [range, setRange] = useState<(typeof RANGES)[number]["key"]>("3m");
+  const [customFrom, setCustomFrom] = useState<string>(() => format(subDays(new Date(), 30), "yyyy-MM-dd"));
+  const [customTo, setCustomTo] = useState<string>(() => format(new Date(), "yyyy-MM-dd"));
   const txs = useLiveQuery(() => db.transactions.toArray(), []);
 
   const { chartData, totalGot, totalGave, net } = useMemo(() => {
     const all = txs ?? [];
     const r = RANGES.find((x) => x.key === range)!;
-    const cutoff = r.days === 0 ? 0 : subDays(new Date(), r.days).getTime();
-    const filtered = all.filter((t) => t.date >= cutoff);
 
-    // Decide bucket size — keep it sparse so labels don't collide
-    const buckets = r.days <= 30 ? 8 : r.days <= 90 ? 10 : r.days <= 180 ? 10 : 12;
-    const start = r.days === 0
-      ? (filtered.length ? Math.min(...filtered.map((t) => t.date)) : Date.now())
-      : cutoff;
-    const end = Date.now();
+    let start: number;
+    let end: number = Date.now();
+    if (range === "custom") {
+      start = new Date(customFrom).setHours(0, 0, 0, 0);
+      end = new Date(customTo).setHours(23, 59, 59, 999);
+    } else if (r.days === 0) {
+      start = all.length ? Math.min(...all.map((t) => t.date)) : Date.now();
+    } else {
+      start = subDays(new Date(), r.days).getTime();
+    }
+    const filtered = all.filter((t) => t.date >= start && t.date <= end);
+
+    const spanDays = Math.max(1, Math.ceil((end - start) / 86400000));
+    const buckets = spanDays <= 30 ? 8 : spanDays <= 90 ? 10 : spanDays <= 180 ? 10 : 12;
     const span = Math.max(end - start, 1);
     const step = span / buckets;
 
@@ -58,7 +68,7 @@ function ReportsPage() {
       else data[idx].gave += t.amount;
     });
 
-    const fmtStr = r.days <= 30 ? "d MMM" : r.days <= 365 ? "d MMM" : "MMM yy";
+    const fmtStr = spanDays <= 30 ? "d MMM" : spanDays <= 365 ? "d MMM" : "MMM yy";
     const chartData = data.map((d) => ({
       label: format(d.ts, fmtStr),
       Got: Math.round(d.got),
@@ -68,7 +78,7 @@ function ReportsPage() {
     const totalGot = filtered.filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
     const totalGave = filtered.filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
     return { chartData, totalGot, totalGave, net: totalGot - totalGave };
-  }, [txs, range]);
+  }, [txs, range, customFrom, customTo]);
 
   return (
     <AppShell>
@@ -91,6 +101,19 @@ function ReportsPage() {
           </button>
         ))}
       </div>
+
+      {range === "custom" && (
+        <div className="px-4 mt-3 flex items-end gap-2">
+          <div className="flex-1">
+            <label className="text-[10px] uppercase text-muted-foreground">From</label>
+            <Input type="date" value={customFrom} max={customTo} onChange={(e) => setCustomFrom(e.target.value)} className="h-9" />
+          </div>
+          <div className="flex-1">
+            <label className="text-[10px] uppercase text-muted-foreground">To</label>
+            <Input type="date" value={customTo} min={customFrom} onChange={(e) => setCustomTo(e.target.value)} className="h-9" />
+          </div>
+        </div>
+      )}
 
       <section className="px-4 mt-4 grid grid-cols-3 gap-2">
         <Card className="p-3">

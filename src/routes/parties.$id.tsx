@@ -36,6 +36,9 @@ function PartyDetail() {
   const [txType, setTxType] = useState<"got" | "gave">("got");
   const [editingTx, setEditingTx] = useState<Transaction | undefined>();
   const [editParty, setEditParty] = useState(false);
+  const [confirmEditParty, setConfirmEditParty] = useState(false);
+  const [confirmEditTx, setConfirmEditTx] = useState<Transaction | null>(null);
+  const [confirmDeleteTx, setConfirmDeleteTx] = useState<Transaction | null>(null);
   const [q, setQ] = useState("");
 
   const party = useLiveQuery(() => db.parties.get(partyId), [partyId]);
@@ -116,7 +119,7 @@ function PartyDetail() {
             <Button size="icon" variant="ghost"><MoreVertical className="h-5 w-5" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditParty(true)}><Edit2 className="h-4 w-4 mr-2" />Edit Party</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setConfirmEditParty(true)}><Edit2 className="h-4 w-4 mr-2" />Edit Party</DropdownMenuItem>
             <DropdownMenuItem onClick={() => exportPartyCSV(party, txs ?? [])}><FileDown className="h-4 w-4 mr-2" />Export CSV</DropdownMenuItem>
             <DropdownMenuItem onClick={() => exportPartyPDF(party, txs ?? [])}><FileText className="h-4 w-4 mr-2" />Export PDF</DropdownMenuItem>
             <DropdownMenuItem onClick={() => fileRef.current?.click()}><FileUp className="h-4 w-4 mr-2" />Import CSV</DropdownMenuItem>
@@ -145,9 +148,9 @@ function PartyDetail() {
           className={cn(
             "rounded-2xl text-primary-foreground p-4 shadow-lg transition-colors",
             net < 0
-              ? "bg-gradient-to-br from-rose-500 to-red-700"
+              ? "bg-gradient-to-br from-rose-400 via-rose-500 to-red-500/90"
               : net > 0
-              ? "bg-gradient-to-br from-emerald-500 to-teal-700"
+              ? "bg-gradient-to-br from-teal-400 via-teal-500 to-cyan-700"
               : "bg-gradient-to-br from-primary to-primary/80"
           )}
         >
@@ -190,15 +193,15 @@ function PartyDetail() {
                 <p className={cn("font-semibold text-sm tabular-nums", isGot ? "text-success" : "text-danger")}>
                   {isGot ? "+" : "-"} {fmtMoney(t.amount).replace(/^[+\-]\s?/, "")}
                 </p>
-                <p className="text-xs text-muted-foreground">{format(t.date, "MMM d yyyy, h:mm a")} · {t.paymentMethod}</p>
+                <p className="text-xs text-muted-foreground">{format(t.date, "MMM d yyyy, h:mm a")}</p>
                 {t.note && <p className="text-xs mt-1">{t.note}</p>}
                 {t.receipt && <img src={t.receipt} alt="" className="mt-2 max-h-24 rounded border border-border" />}
               </div>
               <div className="flex flex-col gap-1">
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditingTx(t); setTxOpen(true); }}>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setConfirmEditTx(t)}>
                   <Edit2 className="h-3.5 w-3.5" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-7 w-7 text-danger" onClick={() => deleteTx(t.id!)}>
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-danger" onClick={() => setConfirmDeleteTx(t)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -214,9 +217,9 @@ function PartyDetail() {
 
       {/* Sticky action bar */}
       <div className="fixed bottom-16 inset-x-0 z-30 px-4 pb-2 pointer-events-none">
-        <div className="mx-auto max-w-md grid grid-cols-2 gap-3 pointer-events-auto">
-          <Button onClick={() => newTx("gave")} className="bg-danger hover:bg-danger/90 text-danger-foreground h-12 shadow-lg">You Gave</Button>
-          <Button onClick={() => newTx("got")} className="bg-success hover:bg-success/90 text-success-foreground h-12 shadow-lg">You Got</Button>
+        <div className="mx-auto max-w-md grid grid-cols-2 gap-2.5 pointer-events-auto">
+          <Button onClick={() => newTx("gave")} className="bg-danger hover:bg-danger/90 text-danger-foreground h-11 text-sm font-medium shadow-md rounded-xl">You Gave</Button>
+          <Button onClick={() => newTx("got")} className="bg-success hover:bg-success/90 text-success-foreground h-11 text-sm font-medium shadow-md rounded-xl">You Got</Button>
         </div>
       </div>
 
@@ -228,6 +231,45 @@ function PartyDetail() {
         existing={editingTx}
       />
       <PartyDialog open={editParty} onOpenChange={setEditParty} existing={party} />
+
+      <AlertDialog open={confirmEditParty} onOpenChange={setConfirmEditParty}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit this party?</AlertDialogTitle>
+            <AlertDialogDescription>You're about to modify {party.name}'s details.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmEditParty(false); setEditParty(true); }}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmEditTx} onOpenChange={(v) => !v && setConfirmEditTx(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit this entry?</AlertDialogTitle>
+            <AlertDialogDescription>You're about to modify a transaction of {confirmEditTx ? fmtMoney(confirmEditTx.amount) : ""}.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (confirmEditTx) { setEditingTx(confirmEditTx); setTxOpen(true); } setConfirmEditTx(null); }}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmDeleteTx} onOpenChange={(v) => !v && setConfirmDeleteTx(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently remove this transaction.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => { if (confirmDeleteTx?.id) await deleteTx(confirmDeleteTx.id); setConfirmDeleteTx(null); }} className="bg-danger hover:bg-danger/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }

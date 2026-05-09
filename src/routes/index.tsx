@@ -59,9 +59,9 @@ function HomePage() {
           className={cn(
             "overflow-hidden border-0 text-primary-foreground p-5 shadow-lg transition-colors",
             net < 0
-              ? "bg-gradient-to-br from-rose-500 to-red-700"
+              ? "bg-gradient-to-br from-rose-400 via-rose-500 to-red-500/90"
               : net > 0
-              ? "bg-gradient-to-br from-emerald-500 to-teal-700"
+              ? "bg-gradient-to-br from-teal-400 via-teal-500 to-cyan-700"
               : "bg-gradient-to-br from-primary to-primary/80"
           )}
         >
@@ -85,20 +85,18 @@ function HomePage() {
         </Card>
       </section>
 
-      <section className="px-4 mt-4 grid grid-cols-2 gap-3">
+      <section className="px-4 mt-4 grid grid-cols-2 gap-2.5">
         <Button
-          size="lg"
           onClick={() => open("gave")}
-          className="bg-danger hover:bg-danger/90 text-danger-foreground h-14 shadow-md"
+          className="bg-danger hover:bg-danger/90 text-danger-foreground h-11 text-sm font-medium shadow-sm rounded-xl"
         >
-          <ArrowUpRight className="mr-1 h-5 w-5" /> You Gave
+          <ArrowUpRight className="mr-1 h-4 w-4" /> You Gave
         </Button>
         <Button
-          size="lg"
           onClick={() => open("got")}
-          className="bg-success hover:bg-success/90 text-success-foreground h-14 shadow-md"
+          className="bg-success hover:bg-success/90 text-success-foreground h-11 text-sm font-medium shadow-sm rounded-xl"
         >
-          <ArrowDownLeft className="mr-1 h-5 w-5" /> You Got
+          <ArrowDownLeft className="mr-1 h-4 w-4" /> You Got
         </Button>
       </section>
 
