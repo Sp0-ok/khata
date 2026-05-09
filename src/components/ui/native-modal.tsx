@@ -1,7 +1,6 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { clearRadixLocks, nativeLog } from "@/lib/androidStability";
 
 interface NativeModalProps {
   open: boolean;
@@ -13,28 +12,16 @@ interface NativeModalProps {
 }
 
 export function NativeModal({ open, title, children, footer, onOpenChange, className }: NativeModalProps) {
-  useEffect(() => {
-    if (!open) return;
-    nativeLog("modal:open", title);
-    clearRadixLocks();
-    document.body.classList.add("native-modal-open");
-    return () => {
-      document.body.classList.remove("native-modal-open");
-      clearRadixLocks();
-      nativeLog("modal:close", title);
-    };
-  }, [open, title]);
-
   if (!open) return null;
 
   return (
-    <div className="keyboard-scroll absolute inset-x-0 top-0 z-50 h-screen bg-foreground/35 px-3 py-3" role="presentation">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-foreground/35 px-3 py-3" role="presentation">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="native-modal-title"
         className={cn(
-          "relative mx-auto mb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] mt-[max(env(safe-area-inset-top),0.75rem)] rounded-lg border bg-background p-4 text-foreground shadow-sm",
+          "relative mx-auto mb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] mt-[max(env(safe-area-inset-top),0.75rem)] max-h-[calc(100vh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto rounded-lg border bg-background p-4 text-foreground shadow-sm",
           className,
         )}
       >
@@ -49,7 +36,7 @@ export function NativeModal({ open, title, children, footer, onOpenChange, class
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="keyboard-scroll max-h-[calc(100vh-11rem)]">{children}</div>
+        <div>{children}</div>
         {footer && <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{footer}</div>}
       </div>
     </div>
