@@ -1,6 +1,7 @@
 import { memo, useEffect, useState } from "react";
 import { NativeModal } from "@/components/ui/native-modal";
 import { Input } from "@/components/ui/input";
+import { LocalInput, LocalTextarea } from "@/components/ui/local-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -120,21 +121,22 @@ export const TransactionDialog = memo(function TransactionDialog({ open, onOpenC
           </div>
           <div>
             <Label>Amount</Label>
-            <Input
+            <LocalInput
               type="text"
               inputMode="decimal"
               value={amount}
-              onChange={(e) => setAmount(groupAmount(e.target.value))}
+              onValueChange={setAmount}
+              formatValue={groupAmount}
               placeholder="0.00"
             />
           </div>
           <div>
             <Label>Date & Time</Label>
-            <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+            <LocalInput type="datetime-local" value={date} onValueChange={setDate} />
           </div>
           <div>
             <Label>Note</Label>
-            <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
+            <LocalTextarea value={note} onValueChange={setNote} rows={2} />
           </div>
           <div>
             <Label>Receipt Image</Label>

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { LocalInput } from "@/components/ui/local-input";
+import { LocalInput, LocalTextarea } from "@/components/ui/local-input";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, ArrowLeft } from "lucide-react";
 import { memo, useMemo, useState } from "react";
@@ -153,9 +153,9 @@ export const PartyDialog = memo(function PartyDialog({
       }
     >
         <div className="space-y-3">
-          <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
-          <div><Label>Notes</Label><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <div><Label>Name</Label><LocalInput value={name} onValueChange={setName} /></div>
+          <div><Label>Phone</Label><LocalInput value={phone} onValueChange={setPhone} /></div>
+          <div><Label>Notes</Label><LocalTextarea rows={2} value={notes} onValueChange={setNotes} /></div>
           <div>
             <Label>Photo</Label>
             <Input
