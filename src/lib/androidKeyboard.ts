@@ -49,7 +49,7 @@ export function installAndroidKeyboardWorkaround() {
   const updateFromViewport = () => {
     if (!visualViewport || !isTextControl(document.activeElement)) return;
     const keyboardHeight = Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop);
-    setKeyboardOpen(keyboardHeight > 80, keyboardHeight);
+    setKeyboardOpen(true, keyboardHeight > 80 ? keyboardHeight : 0);
   };
   visualViewport?.addEventListener("resize", updateFromViewport, { passive: true });
   visualViewport?.addEventListener("scroll", updateFromViewport, { passive: true });
