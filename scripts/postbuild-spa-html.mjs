@@ -1,42 +1,41 @@
 #!/usr/bin/env node
-// Generates dist/client/index.html so Capacitor (and any static host) has an
-// SPA entry point. TanStack Start's normal build doesn't emit one because it
-// renders HTML through SSR at request time — but Capacitor's Android WebView
-// needs a real index.html on disk.
-//
-// We detect the client entry JS by finding the chunk that contains
-// `hydrateRoot`, link the single emitted CSS bundle, and ship a minimal
-// HTML shell. The TanStack client router then takes over after hydration
-// and handles every in-app route (parties, settings, reports, etc.).
-import { readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+// After both Vite builds run, flatten the SPA bundle from dist/client/spa
+// into dist/client (overwriting any SSR-only index.html) so Capacitor sees:
+//   dist/client/index.html
+//   dist/client/assets/spa-*.js
+//   dist/client/assets/*.css
+// The TanStack SSR worker bundle is unaffected — it lives in dist/server.
+import {
+  readdirSync, readFileSync, writeFileSync, existsSync,
+  mkdirSync, copyFileSync, rmSync,
+} from "node:fs";
 import { join } from "node:path";
 
 const clientDir = "dist/client";
-const assetsDir = join(clientDir, "assets");
+const spaDir = join(clientDir, "spa");
+const spaAssets = join(spaDir, "assets");
+const targetAssets = join(clientDir, "assets");
 
-if (!existsSync(assetsDir)) {
-  console.error(`[postbuild] ${assetsDir} not found — did the build succeed?`);
+if (!existsSync(spaAssets)) {
+  console.error(`[postbuild] ${spaAssets} not found — did vite.spa.config.ts run?`);
   process.exit(1);
 }
 
-const files = readdirSync(assetsDir);
+mkdirSync(targetAssets, { recursive: true });
 
-// Client entry = the JS chunk that calls hydrateRoot.
+const files = readdirSync(spaAssets);
 let entryJs = null;
+let cssFile = null;
 for (const f of files) {
-  if (!f.endsWith(".js")) continue;
-  const content = readFileSync(join(assetsDir, f), "utf8");
-  if (content.includes("hydrateRoot")) {
-    entryJs = f;
-    break;
-  }
-}
-if (!entryJs) {
-  console.error("[postbuild] Could not locate client entry chunk (no hydrateRoot found).");
-  process.exit(1);
+  copyFileSync(join(spaAssets, f), join(targetAssets, f));
+  if (f.startsWith("spa-") && f.endsWith(".js")) entryJs = f;
+  else if (f.endsWith(".css")) cssFile = f;
 }
 
-const cssFile = files.find((f) => f.endsWith(".css")) ?? null;
+if (!entryJs) {
+  console.error("[postbuild] Could not find SPA entry chunk (spa-*.js).");
+  process.exit(1);
+}
 
 const html = `<!doctype html>
 <html lang="en">
@@ -46,7 +45,7 @@ const html = `<!doctype html>
     <meta name="theme-color" content="#0d9488" />
     <title>KhataBook</title>
     <meta name="description" content="Local-first bookkeeping for parties, transactions, and balances." />
-${cssFile ? `    <link rel="stylesheet" href="/assets/${cssFile}" />\n` : ""}    <script type="module" src="/assets/${entryJs}"></script>
+${cssFile ? `    <link rel="stylesheet" href="./assets/${cssFile}" />\n` : ""}    <script type="module" src="./assets/${entryJs}"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -55,4 +54,8 @@ ${cssFile ? `    <link rel="stylesheet" href="/assets/${cssFile}" />\n` : ""}   
 `;
 
 writeFileSync(join(clientDir, "index.html"), html);
+
+// Clean up the intermediate spa/ folder so Capacitor doesn't ship duplicates.
+rmSync(spaDir, { recursive: true, force: true });
+
 console.log(`[postbuild] Wrote ${clientDir}/index.html (entry: ${entryJs}${cssFile ? `, css: ${cssFile}` : ""})`);
