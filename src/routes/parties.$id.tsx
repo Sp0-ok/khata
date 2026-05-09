@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, ArrowDownLeft, ArrowUpRight, Edit2, FileDown, FileUp, FileText, Phone, Trash2, MoreVertical, Search } from "lucide-react";
-import { memo, useMemo, useRef, useState } from "react";
+import { memo, type ReactNode, useMemo, useRef, useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { PartyDialog } from "./parties.index";
 import { NativeConfirm, NativeModal } from "@/components/ui/native-modal";
@@ -345,7 +345,7 @@ function TransactionDetails({ transaction }: { transaction: Transaction }) {
   );
 }
 
-function ActionButton({ icon, label, onClick, danger }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
+function ActionButton({ icon, label, onClick, danger }: { icon: ReactNode; label: string; onClick: () => void; danger?: boolean }) {
   return (
     <button
       type="button"
