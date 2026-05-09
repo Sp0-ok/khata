@@ -84,7 +84,7 @@ function PartyDetail() {
 
   const totalGot = (txs ?? []).filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
   const totalGave = (txs ?? []).filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
-  const net = totalGot - totalGave;
+  const net = totalGave - totalGot;
 
   function newTx(type: "got" | "gave") {
     setEditingTx(undefined);

@@ -34,7 +34,7 @@ function PartiesPage() {
   const balances = new Map<number, number>();
   (txs ?? []).forEach((t) => {
     const cur = balances.get(t.partyId) ?? 0;
-    balances.set(t.partyId, cur + (t.type === "got" ? t.amount : -t.amount));
+    balances.set(t.partyId, cur + (t.type === "gave" ? t.amount : -t.amount));
   });
 
   const filtered = (parties ?? []).filter(
