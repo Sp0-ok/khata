@@ -45,7 +45,8 @@ const html = `<!doctype html>
     <meta name="theme-color" content="#0d9488" />
     <title>KhataBook</title>
     <meta name="description" content="Local-first bookkeeping for parties, transactions, and balances." />
-${cssFile ? `    <link rel="stylesheet" href="./assets/${cssFile}" />\n` : ""}    <script type="module" src="./assets/${entryJs}"></script>
+    <base href="/" />
+${cssFile ? `    <link rel="stylesheet" href="/assets/${cssFile}" />\n` : ""}    <script type="module" src="/assets/${entryJs}"></script>
   </head>
   <body>
     <div id="root"></div>
