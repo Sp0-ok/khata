@@ -33,7 +33,10 @@ function HomePage() {
   const businessName = useLiveQuery(async () => (await db.settings.get("businessName"))?.value as string | undefined, []);
 
   const partyMap = new Map((parties ?? []).map((p) => [p.id!, p]));
-  const net = (allTxs ?? []).reduce((s, t) => s + (t.type === "gave" ? t.amount : -t.amount), 0);
+  // Display from counterparty's perspective:
+  //   net > 0  → you owe overall (good standing for you, teal)
+  //   net < 0  → others owe you overall (their balance is negative, red)
+  const net = (allTxs ?? []).reduce((s, t) => s + (t.type === "got" ? t.amount : -t.amount), 0);
   const totalGot = (allTxs ?? []).filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
   const totalGave = (allTxs ?? []).filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
 
@@ -70,7 +73,7 @@ function HomePage() {
             {fmtMoney(net, true)}
           </p>
           <p className="text-[11px] mt-1 opacity-90">
-            {net < 0 ? "You owe overall" : net > 0 ? "You'll receive overall" : "All settled"}
+            {net < 0 ? "You'll receive overall" : net > 0 ? "You owe overall" : "All settled"}
           </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-lg bg-white/15 p-3 backdrop-blur">
