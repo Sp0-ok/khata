@@ -5,12 +5,15 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-// Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper),
-// and prerender "/" so that `dist/client/index.html` exists. Capacitor needs that file as
-// the WebView entry point — without it `npx cap copy android` fails.
 export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
+    // Prerender the SPA shell so `dist/client/index.html` exists. Capacitor needs
+    // an index.html as the WebView entry point — without it `npx cap copy android`
+    // fails with "The web assets directory must contain an index.html file".
+    // We only prerender "/" (crawlLinks: false) so dynamic / loader-bound routes
+    // don't 500 during prerender; the client-side router still handles them at
+    // runtime once the SPA shell loads.
     prerender: {
       enabled: true,
       crawlLinks: false,
