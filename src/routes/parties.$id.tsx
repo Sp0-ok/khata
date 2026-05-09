@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LocalInput } from "@/components/ui/local-input";
 import { ArrowLeft, ArrowDownLeft, ArrowUpRight, Edit2, FileDown, FileUp, FileText, Phone, Trash2, MoreVertical, Search } from "lucide-react";
 import { memo, type ReactNode, useMemo, useRef, useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
@@ -180,7 +181,7 @@ function PartyDetail() {
       <div className="px-4 mt-4 mb-2 flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Search transactions…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <LocalInput className="pl-9" placeholder="Search transactions…" value={q} onValueChange={setQ} />
         </div>
         <select
           value={sortBy}
