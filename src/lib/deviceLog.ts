@@ -151,6 +151,7 @@ export function devLog(name: string, detail?: unknown, level: LogLevel = "info")
   const entry: DeviceLogEntry = { t: Date.now(), level, name, detail: detailToString(detail) };
   buffer.push(entry);
   if (buffer.length > MAX_ENTRIES) buffer.splice(0, buffer.length - MAX_ENTRIES);
+  snapshot = buffer.slice();
   updateAlwaysOnLogPanel();
   scheduleSave();
   listeners.forEach((l) => {
