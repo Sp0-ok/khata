@@ -1,68 +1,54 @@
-## Goal
+## Onboarding splash + background warm-up
 
-Stop guessing. Get **real evidence** from the Android device about what's freezing the WebView, then act on facts.
+### The theory
+Yes, this is plausible. On a cold APK launch the WebView has to:
+1. Parse + execute the JS bundle
+2. Open IndexedDB (Dexie `digikhata_local_v1`)
+3. Hydrate the TanStack Router
+4. Mount the home route, which immediately runs `db.transactions.toArray()` / `partyBalance()` queries
 
-Good news from a quick audit: no app routes still import Radix `Dialog`, `DropdownMenu`, `Select`, `AlertDialog`, `Popover`, `Sheet`, `Tooltip`, etc. directly. Only the shadcn UI files cross-reference each other. So a blanket "rip out all Radix" is probably wasted work — the remaining freeze is more likely something else (DB call, navigation hang, asset load, etc.). We need the device to tell us.
+If any of those stall (Dexie on first launch can take 1–3s on Android, and the router's first navigation can race with it), the UI looks frozen on the very first interaction — exactly matching what you're seeing on Add / Settings / You Gave / You Got.
 
-## Phase 1 — Ship a device debug overlay (do this BEFORE any more Radix work)
+A welcome/onboarding screen that owns the first ~1–2 seconds gives the WebView time to finish all of that before the user can tap anything that triggers a Dexie query or a dialog.
 
-Goal: when the app freezes on your phone, you can see exactly what was happening, no `adb`, no Chrome inspector required.
+### What I'll build
 
-1. **`src/lib/deviceLog.ts`** (new) — small ring buffer (last 200 events), persisted to `localStorage` so it survives crashes. Wrap the existing `nativeLog` to also push here. Capture:
-   - every navigation (before / after)
-   - every `nativeLog` event
-   - every `withNativeTimeout` start / finish / timeout
-   - all `window.error` and `unhandledrejection`
-   - tap target tag + id/class
-   - Dexie open / query errors
-   - `document.visibilitychange` and `pagehide` (tells us if WebView itself died vs JS hung)
+**1. `OnboardingGate` component (wraps the whole app in `spa-entry.tsx`)**
+- Shows a branded full-screen splash immediately on mount (no Dexie, no router, no Radix — pure JSX).
+- Runs a "warm-up" sequence in the background:
+  - `await db.open()` (with a hard 5s timeout → if it fails, show retry, not freeze)
+  - Prime queries: `db.parties.count()`, `db.transactions.count()` so IndexedDB pages are hot
+  - `applyStoredTheme()` + `loadCurrency()` (currently fire-and-forget in `__root.tsx`)
+  - One `requestIdleCallback` / `rAF` tick to let the WebView settle
+- Only after warm-up resolves does it mount `<RouterProvider />`. Until then, router + all routes + all dialogs don't exist → can't freeze.
 
-2. **`src/components/DebugOverlay.tsx`** (new) — fixed bottom-right floating button (only renders on native Android, or when `?debug=1`). Tapping it opens a full-screen panel showing:
-   - the event log (newest first, color-coded by level)
-   - "Copy all" button → copies to clipboard via `@capacitor/clipboard` (already a transitive dep) or `navigator.clipboard`
-   - "Share" button → uses `@capacitor/share` to send the log as text to WhatsApp/email
-   - "Clear" button
-   - device info header: platform, WebView UA, screen size, build timestamp
-   - Activate via **3-finger tap** OR **long-press top-left corner** so it can't be hit accidentally.
+**2. First-run onboarding (only shown once)**
+- Stored flag: `settings` table key `onboarding_done = true`
+- 3 quick swipeable cards: "Track who owes you", "You Gave / You Got", "Works fully offline"
+- "Get started" button → sets flag, transitions to app
+- On subsequent launches: same `OnboardingGate` runs the warm-up but skips the cards (just shows splash for as long as warm-up takes, min 400ms to avoid flash)
 
-3. **Mount the overlay** in `src/spa-entry.tsx` at the root, after `RouterProvider`.
+**3. Instrumentation (keeps the DBG overlay useful)**
+- `devLog` breadcrumbs at every warm-up step: `warmup:db-open`, `warmup:db-open-ok`, `warmup:prime-queries`, `warmup:done`, `warmup:timeout`
+- If warm-up times out, the splash shows a "Continue anyway" button instead of freezing — and the log will tell us exactly which step hung
 
-4. **Instrument suspected hot paths** with explicit log lines:
-   - `PartyPickerDialog` open/close + party-list query
-   - `TransactionDialog` mount, save start, save end
-   - Settings page mount + each `db.settings.put`
-   - `db.ts` — wrap `db.open()` and log success/failure (Dexie failures on Android WebView are a known freeze cause if the IndexedDB origin gets confused by `androidScheme: "https"`)
+**4. Defensive: don't query Dexie during render**
+- `routes/index.tsx`, `parties.index.tsx`, `parties.$id.tsx` likely call `partyBalance` / `netTotal` in `useEffect`. I'll audit and ensure none of them block first paint — move to `useQuery` with `enabled` guards if needed. (Small, only if the audit shows synchronous-ish patterns.)
 
-5. **Bonus safety net**: lower the watchdog threshold from 2500 ms → 1500 ms and have it auto-show the overlay when it fires, so a freeze surfaces itself.
+### Files touched
+- `src/components/OnboardingGate.tsx` (new) — splash + onboarding cards + warm-up logic
+- `src/spa-entry.tsx` — wrap `<RouterProvider />` in `<OnboardingGate>`
+- `src/lib/warmup.ts` (new) — the actual warm-up sequence, isolated and testable
+- `src/routes/__root.tsx` — remove the `useEffect` that calls `applyStoredTheme` / `loadCurrency` (now done in warm-up before render)
+- (Conditional) tiny tweaks to home/parties routes if the audit finds blocking queries
 
-## Phase 2 — You test on device
+### What this does NOT change
+- No Radix removal (audit already showed routes don't use Radix directly)
+- No native Android changes
+- DBG overlay, watchdog, deviceLog all stay exactly as-is
+- All your data + existing settings preserved
 
-You install the new APK, reproduce the freeze (Add party, Settings, You Got/Gave), then:
-- pull up the overlay (3-finger tap)
-- hit "Share" → send me the log
-
-That log will tell us the *actual* failing call. From there the fix is targeted, not speculative.
-
-## Phase 3 — Conditional Radix audit
-
-**Only if** the log shows the freeze happens inside a Radix-derived component (focus trap, portal, scroll lock), I'll do the full sweep:
-- replace `command.tsx` Dialog dep
-- replace `sidebar.tsx` Sheet/Tooltip deps
-- audit any indirect Radix imports
-
-If the log shows Dexie / navigation / asset loading / native plugin as the culprit, we fix that instead and leave Radix alone.
-
-## Why this order
-
-You've already burned several rebuilds on guesses. One more rebuild that gives us **ground truth from the device** is worth more than three more "this might fix it" rebuilds. The overlay is small (~150 LoC), pure frontend, no native code changes, no `cap sync` weirdness — low risk to add.
-
-## Files to be created / modified
-
-- create `src/lib/deviceLog.ts`
-- create `src/components/DebugOverlay.tsx`
-- edit `src/lib/androidStability.ts` (forward events to deviceLog, lower watchdog)
-- edit `src/spa-entry.tsx` (mount overlay)
-- edit `src/lib/db.ts` (log open + errors)
-- edit `src/components/PartyPickerDialog.tsx`, `src/components/TransactionDialog.tsx`, `src/routes/settings.tsx`, `src/routes/parties.index.tsx` (add a few log breadcrumbs)
-
-No Radix changes in this phase. No native Android code changes. Just a rebuild + `npx cap sync android`.
+### Expected outcome
+- First launch: clean branded onboarding, ~1.5s of warm-up hidden behind it, then app is fully responsive.
+- Subsequent launches: ~400ms splash, app opens already-warm.
+- If something genuinely is broken in Dexie or a route, the splash's timeout + DBG log will tell us **which** thing instead of presenting as a generic freeze.

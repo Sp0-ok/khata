@@ -78,6 +78,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // Theme + currency are loaded by the warm-up gate before the router mounts
+  // in the SPA build. For SSR fallback, load them here too.
   useEffect(() => {
     applyStoredTheme();
     loadCurrency();

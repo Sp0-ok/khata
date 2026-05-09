@@ -12,6 +12,7 @@ import { Toaster } from "./components/ui/sonner";
 import { clearRadixLocks, installAndroidFreezeWatchdog, nativeLog } from "./lib/androidStability";
 import { installDeviceLogListeners, devLog, openDebugOverlay } from "./lib/deviceLog";
 import { DebugOverlay } from "./components/DebugOverlay";
+import { OnboardingGate } from "./components/OnboardingGate";
 import "./styles.css";
 
 // Bring up persistent on-device logging FIRST so we capture everything,
@@ -46,7 +47,9 @@ const el = document.getElementById("root")!;
 // trap inside the Capacitor WebView and can freeze the UI on dialog open.
 createRoot(el).render(
   <QueryClientProvider client={queryClient}>
-    <RouterProvider router={router} />
+    <OnboardingGate>
+      <RouterProvider router={router} />
+    </OnboardingGate>
     <Toaster richColors position="top-center" />
     <DebugOverlay />
   </QueryClientProvider>,
