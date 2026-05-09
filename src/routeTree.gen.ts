@@ -9,9 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as PartiesRouteImport } from './routes/parties'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PartiesIdRouteImport } from './routes/parties.$id'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PartiesRoute = PartiesRouteImport.update({
   id: '/parties',
   path: '/parties',
@@ -22,35 +35,65 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PartiesIdRoute = PartiesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PartiesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/parties': typeof PartiesRoute
+  '/parties': typeof PartiesRouteWithChildren
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/parties/$id': typeof PartiesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/parties': typeof PartiesRoute
+  '/parties': typeof PartiesRouteWithChildren
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/parties/$id': typeof PartiesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/parties': typeof PartiesRoute
+  '/parties': typeof PartiesRouteWithChildren
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/parties/$id': typeof PartiesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/parties'
+  fullPaths: '/' | '/parties' | '/reports' | '/settings' | '/parties/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/parties'
-  id: '__root__' | '/' | '/parties'
+  to: '/' | '/parties' | '/reports' | '/settings' | '/parties/$id'
+  id: '__root__' | '/' | '/parties' | '/reports' | '/settings' | '/parties/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  PartiesRoute: typeof PartiesRoute
+  PartiesRoute: typeof PartiesRouteWithChildren
+  ReportsRoute: typeof ReportsRoute
+  SettingsRoute: typeof SettingsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/parties': {
       id: '/parties'
       path: '/parties'
@@ -65,12 +108,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/parties/$id': {
+      id: '/parties/$id'
+      path: '/$id'
+      fullPath: '/parties/$id'
+      preLoaderRoute: typeof PartiesIdRouteImport
+      parentRoute: typeof PartiesRoute
+    }
   }
 }
 
+interface PartiesRouteChildren {
+  PartiesIdRoute: typeof PartiesIdRoute
+}
+
+const PartiesRouteChildren: PartiesRouteChildren = {
+  PartiesIdRoute: PartiesIdRoute,
+}
+
+const PartiesRouteWithChildren =
+  PartiesRoute._addFileChildren(PartiesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  PartiesRoute: PartiesRoute,
+  PartiesRoute: PartiesRouteWithChildren,
+  ReportsRoute: ReportsRoute,
+  SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
