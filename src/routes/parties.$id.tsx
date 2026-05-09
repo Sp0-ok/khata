@@ -42,12 +42,34 @@ function PartyDetail() {
   const [confirmEditTx, setConfirmEditTx] = useState<Transaction | null>(null);
   const [confirmDeleteTx, setConfirmDeleteTx] = useState<Transaction | null>(null);
   const [q, setQ] = useState("");
+  const [sortBy, setSortBy] = useState<string>("created-desc");
+  const [viewing, setViewing] = useState<Transaction | null>(null);
 
   const party = useLiveQuery(() => db.parties.get(partyId), [partyId]);
   const txs = useLiveQuery(
-    () => db.transactions.where("partyId").equals(partyId).reverse().sortBy("date").then(a => a.reverse().sort((x,y) => y.date - x.date)),
+    () => db.transactions.where("partyId").equals(partyId).toArray(),
     [partyId]
   );
+
+  const list = useMemo(() => {
+    const filtered = (txs ?? []).filter((t) => {
+      if (!q) return true;
+      const lc = q.toLowerCase();
+      return (t.note ?? "").toLowerCase().includes(lc) || String(t.amount).includes(q);
+    });
+    const sorted = [...filtered];
+    switch (sortBy) {
+      case "created-asc": sorted.sort((a, b) => a.createdAt - b.createdAt); break;
+      case "date-desc": sorted.sort((a, b) => b.date - a.date); break;
+      case "date-asc": sorted.sort((a, b) => a.date - b.date); break;
+      case "amount-desc": sorted.sort((a, b) => b.amount - a.amount); break;
+      case "amount-asc": sorted.sort((a, b) => a.amount - b.amount); break;
+      case "got-first": sorted.sort((a, b) => (a.type === b.type ? b.createdAt - a.createdAt : a.type === "got" ? -1 : 1)); break;
+      case "gave-first": sorted.sort((a, b) => (a.type === b.type ? b.createdAt - a.createdAt : a.type === "gave" ? -1 : 1)); break;
+      default: sorted.sort((a, b) => b.createdAt - a.createdAt);
+    }
+    return sorted;
+  }, [txs, q, sortBy]);
 
   if (!party) {
     return (
@@ -56,12 +78,6 @@ function PartyDetail() {
       </AppShell>
     );
   }
-
-  const list = (txs ?? []).filter((t) => {
-    if (!q) return true;
-    const lc = q.toLowerCase();
-    return (t.note ?? "").toLowerCase().includes(lc) || String(t.amount).includes(q) || (t.paymentMethod ?? "").toLowerCase().includes(lc);
-  });
 
   const totalGot = (txs ?? []).filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
   const totalGave = (txs ?? []).filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
