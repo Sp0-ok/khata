@@ -1,6 +1,8 @@
+import { memo } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, Users, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { clearRadixLocks, nativeLog } from "@/lib/androidStability";
 
 const items: { to: "/" | "/parties" | "/reports"; label: string; icon: typeof Home; exact?: boolean }[] = [
   { to: "/", label: "Home", icon: Home, exact: true },
@@ -8,10 +10,10 @@ const items: { to: "/" | "/parties" | "/reports"; label: string; icon: typeof Ho
   { to: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
-export function BottomNav() {
+export const BottomNav = memo(function BottomNav() {
   const loc = useLocation();
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card/95">
       <div className="mx-auto flex max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
         {items.map(({ to, label, icon: Icon, exact }) => {
           const active = exact ? loc.pathname === to : loc.pathname.startsWith(to);
@@ -19,12 +21,14 @@ export function BottomNav() {
             <Link
               key={to}
               to={to}
+              preload={false}
+              onClick={() => { clearRadixLocks(); nativeLog("nav:bottom", to); }}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors",
+                "flex flex-1 touch-manipulation flex-col items-center gap-1 py-2.5 text-xs font-medium",
                 active ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Icon className={cn("h-5 w-5 transition-transform", active && "scale-110")} />
+              <Icon className="h-5 w-5" />
               <span>{label}</span>
             </Link>
           );
@@ -32,4 +36,4 @@ export function BottomNav() {
       </div>
     </nav>
   );
-}
+});
