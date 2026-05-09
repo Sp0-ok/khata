@@ -209,7 +209,10 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) { buffer = parsed.slice(-MAX_ENTRIES); snapshot = buffer.slice(); }
+      if (Array.isArray(parsed)) {
+        buffer = parsed.slice(-MAX_ENTRIES);
+        snapshot = buffer.slice();
+      }
     }
   } catch {}
 }
@@ -246,7 +249,9 @@ export function devLog(name: string, detail?: unknown, level: LogLevel = "info")
   updateAlwaysOnLogPanel();
   scheduleSave();
   listeners.forEach((l) => {
-    try { l(); } catch {}
+    try {
+      l();
+    } catch {}
   });
   if (level === "error") console.error("[devlog]", name, entry.detail ?? "");
   else if (level === "warn") console.warn("[devlog]", name, entry.detail ?? "");
@@ -260,7 +265,9 @@ export function getDeviceLog(): DeviceLogEntry[] {
 export function clearDeviceLog() {
   buffer = [];
   snapshot = buffer;
-  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {}
   listeners.forEach((l) => l());
 }
 
@@ -306,7 +313,10 @@ export function installDeviceLogListeners() {
       if (!t) return;
       const tag = t.tagName?.toLowerCase();
       const id = t.id ? `#${t.id}` : "";
-      const cls = typeof t.className === "string" && t.className ? `.${t.className.split(/\s+/).slice(0, 2).join(".")}` : "";
+      const cls =
+        typeof t.className === "string" && t.className
+          ? `.${t.className.split(/\s+/).slice(0, 2).join(".")}`
+          : "";
       devLog("tap", `${tag}${id}${cls}`.slice(0, 120));
     },
     { passive: true, capture: true },

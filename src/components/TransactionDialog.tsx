@@ -19,9 +19,14 @@ interface Props {
   onSaved?: () => void;
 }
 
-
-
-export const TransactionDialog = memo(function TransactionDialog({ open, onOpenChange, partyId, initialType, existing, onSaved }: Props) {
+export const TransactionDialog = memo(function TransactionDialog({
+  open,
+  onOpenChange,
+  partyId,
+  initialType,
+  existing,
+  onSaved,
+}: Props) {
   const [type, setType] = useState<TxType>(initialType);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -53,24 +58,30 @@ export const TransactionDialog = memo(function TransactionDialog({ open, onOpenC
     setSaving(true);
     try {
       if (existing?.id) {
-        await withNativeTimeout("transaction:update", db.transactions.update(existing.id, {
-          amount: amt,
-          type,
-          note,
-          receipt,
-          date: new Date(date).getTime(),
-          updatedAt: Date.now(),
-        }));
+        await withNativeTimeout(
+          "transaction:update",
+          db.transactions.update(existing.id, {
+            amount: amt,
+            type,
+            note,
+            receipt,
+            date: new Date(date).getTime(),
+            updatedAt: Date.now(),
+          }),
+        );
       } else {
-        await withNativeTimeout("transaction:add", db.transactions.add({
-          partyId,
-          amount: amt,
-          type,
-          note,
-          receipt,
-          date: new Date(date).getTime(),
-          createdAt: Date.now(),
-        }));
+        await withNativeTimeout(
+          "transaction:add",
+          db.transactions.add({
+            partyId,
+            amount: amt,
+            type,
+            note,
+            receipt,
+            date: new Date(date).getTime(),
+            createdAt: Date.now(),
+          }),
+        );
       }
       onSaved?.();
       onOpenChange(false);
@@ -94,67 +105,77 @@ export const TransactionDialog = memo(function TransactionDialog({ open, onOpenC
       className="max-w-sm"
       footer={
         <>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving || !amount}>Save</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={saving || !amount}>
+            Save
+          </Button>
         </>
       }
     >
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              variant={type === "gave" ? "default" : "outline"}
-              className={cn(type === "gave" && "bg-danger hover:bg-danger/90 text-danger-foreground")}
-              onClick={() => setType("gave")}
-            >
-              You Gave
-            </Button>
-            <Button
-              type="button"
-              variant={type === "got" ? "default" : "outline"}
-              className={cn(type === "got" && "bg-success hover:bg-success/90 text-success-foreground")}
-              onClick={() => setType("got")}
-            >
-              You Got
-            </Button>
-          </div>
-          <div>
-            <Label>Amount</Label>
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={amount}
-              onChange={(event) => setAmount(groupAmount(event.target.value))}
-              placeholder="0.00"
-            />
-          </div>
-          <div>
-            <Label>Date & Time</Label>
-            <Input type="datetime-local" value={date} onChange={(event) => setDate(event.target.value)} />
-          </div>
-          <div>
-            <Label>Note</Label>
-            <Textarea value={note} onChange={(event) => setNote(event.target.value)} rows={2} />
-          </div>
-          <div>
-            <Label>Receipt Image</Label>
-            <Input type="file" accept="image/*" onChange={handleFile} />
-            {receipt && (
-              <div className="relative mt-2 inline-block">
-                <img src={receipt} alt="receipt" className="max-h-32 rounded border border-border" />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  className="absolute -top-2 -right-2 h-6 px-2 text-xs rounded-full shadow"
-                  onClick={() => setReceipt(undefined)}
-                >
-                  Remove
-                </Button>
-              </div>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            type="button"
+            variant={type === "gave" ? "default" : "outline"}
+            className={cn(type === "gave" && "bg-danger hover:bg-danger/90 text-danger-foreground")}
+            onClick={() => setType("gave")}
+          >
+            You Gave
+          </Button>
+          <Button
+            type="button"
+            variant={type === "got" ? "default" : "outline"}
+            className={cn(
+              type === "got" && "bg-success hover:bg-success/90 text-success-foreground",
             )}
-          </div>
+            onClick={() => setType("got")}
+          >
+            You Got
+          </Button>
         </div>
+        <div>
+          <Label>Amount</Label>
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={amount}
+            onChange={(event) => setAmount(groupAmount(event.target.value))}
+            placeholder="0.00"
+          />
+        </div>
+        <div>
+          <Label>Date & Time</Label>
+          <Input
+            type="datetime-local"
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+          />
+        </div>
+        <div>
+          <Label>Note</Label>
+          <Textarea value={note} onChange={(event) => setNote(event.target.value)} rows={2} />
+        </div>
+        <div>
+          <Label>Receipt Image</Label>
+          <Input type="file" accept="image/*" onChange={handleFile} />
+          {receipt && (
+            <div className="relative mt-2 inline-block">
+              <img src={receipt} alt="receipt" className="max-h-32 rounded border border-border" />
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="absolute -top-2 -right-2 h-6 px-2 text-xs rounded-full shadow"
+                onClick={() => setReceipt(undefined)}
+              >
+                Remove
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
     </NativeModal>
   );
 });

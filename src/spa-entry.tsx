@@ -30,14 +30,24 @@ function showFatal(msg: string) {
     }
   } catch {}
 }
-window.addEventListener("error", (e) => showFatal(String(e.error?.stack || e.error?.message || e.message)));
-window.addEventListener("unhandledrejection", (e) => showFatal(String((e.reason as any)?.stack || (e.reason as any)?.message || e.reason)));
+window.addEventListener("error", (e) =>
+  showFatal(String(e.error?.stack || e.error?.message || e.message)),
+);
+window.addEventListener("unhandledrejection", (e) =>
+  showFatal(String((e.reason as any)?.stack || (e.reason as any)?.message || e.reason)),
+);
 
 const router = getRouter();
 const queryClient = router.options.context!.queryClient;
 installAndroidFreezeWatchdog();
-router.subscribe("onBeforeNavigate", () => { clearRadixLocks(); nativeLog("nav:before", location.pathname); });
-router.subscribe("onLoad", () => { clearRadixLocks(); nativeLog("nav:loaded", location.pathname); });
+router.subscribe("onBeforeNavigate", () => {
+  clearRadixLocks();
+  nativeLog("nav:before", location.pathname);
+});
+router.subscribe("onLoad", () => {
+  clearRadixLocks();
+  nativeLog("nav:loaded", location.pathname);
+});
 
 applyStoredTheme();
 loadCurrency();

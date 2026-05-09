@@ -4,7 +4,12 @@ import { Home, Users, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { clearRadixLocks, nativeLog } from "@/lib/androidStability";
 
-const items: { to: "/" | "/parties" | "/reports"; label: string; icon: typeof Home; exact?: boolean }[] = [
+const items: {
+  to: "/" | "/parties" | "/reports";
+  label: string;
+  icon: typeof Home;
+  exact?: boolean;
+}[] = [
   { to: "/", label: "Home", icon: Home, exact: true },
   { to: "/parties", label: "Parties", icon: Users },
   { to: "/reports", label: "Reports", icon: BarChart3 },
@@ -22,10 +27,13 @@ export const BottomNav = memo(function BottomNav() {
               key={to}
               to={to}
               preload={false}
-              onClick={() => { clearRadixLocks(); nativeLog("nav:bottom", to); }}
+              onClick={() => {
+                clearRadixLocks();
+                nativeLog("nav:bottom", to);
+              }}
               className={cn(
                 "flex flex-1 touch-manipulation flex-col items-center gap-1 py-2.5 text-xs font-medium",
-                active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                active ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="h-5 w-5" />

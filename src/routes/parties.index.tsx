@@ -44,28 +44,44 @@ function PartiesPage() {
 
   const filtered = useMemo(() => {
     const query = q.toLowerCase();
-    return (parties ?? []).filter(
-      (p) => p.name.toLowerCase().includes(query) || (p.phone ?? "").includes(q)
-    ).slice(0, 120);
+    return (parties ?? [])
+      .filter((p) => p.name.toLowerCase().includes(query) || (p.phone ?? "").includes(q))
+      .slice(0, 120);
   }, [parties, q]);
 
   return (
     <AppShell>
       <header className="flex items-center justify-between px-4 pt-5 pb-2">
         <div className="flex items-center gap-2">
-          <Link to="/" preload={false} onClick={clearRadixLocks} className="rounded-full p-1.5 hover:bg-accent md:hidden">
+          <Link
+            to="/"
+            preload={false}
+            onClick={clearRadixLocks}
+            className="rounded-full p-1.5 hover:bg-accent md:hidden"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <h1 className="text-xl font-bold">Parties</h1>
         </div>
-        <Button size="sm" onClick={() => { nativeLog("party:new:open"); setOpen(true); }}>
+        <Button
+          size="sm"
+          onClick={() => {
+            nativeLog("party:new:open");
+            setOpen(true);
+          }}
+        >
           <Plus className="h-4 w-4 mr-1" /> New
         </Button>
       </header>
 
       <div className="px-4 mt-2 mb-3 relative">
         <Search className="absolute left-7 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Search parties…" value={q} onChange={(event) => setQ(event.target.value)} />
+        <Input
+          className="pl-9"
+          placeholder="Search parties…"
+          value={q}
+          onChange={(event) => setQ(event.target.value)}
+        />
       </div>
 
       <div className="px-4 space-y-2">
@@ -91,10 +107,17 @@ function PartiesPage() {
                 {p.phone && <p className="text-xs text-muted-foreground">{p.phone}</p>}
               </div>
               <div className="text-right">
-                <p className={cn("font-semibold tabular-nums text-sm", bal < 0 ? "text-danger" : bal > 0 ? "text-success" : "text-muted-foreground")}>
+                <p
+                  className={cn(
+                    "font-semibold tabular-nums text-sm",
+                    bal < 0 ? "text-danger" : bal > 0 ? "text-success" : "text-muted-foreground",
+                  )}
+                >
                   {fmtMoney(bal, true)}
                 </p>
-                <p className="text-[10px] text-muted-foreground">{bal < 0 ? "you'll get" : bal > 0 ? "you'll give" : "settled"}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {bal < 0 ? "you'll get" : bal > 0 ? "you'll give" : "settled"}
+                </p>
               </div>
             </Link>
           );
@@ -129,13 +152,22 @@ export const PartyDialog = memo(function PartyDialog({
     const n = name.trim();
     if (!n) return;
     if (existing?.id) {
-      await withNativeTimeout("party:update", db.parties.update(existing.id, { name: n, phone, notes, photo }));
+      await withNativeTimeout(
+        "party:update",
+        db.parties.update(existing.id, { name: n, phone, notes, photo }),
+      );
     } else {
-      await withNativeTimeout("party:add", db.parties.add({ name: n, phone, notes, photo, createdAt: Date.now() }));
+      await withNativeTimeout(
+        "party:add",
+        db.parties.add({ name: n, phone, notes, photo, createdAt: Date.now() }),
+      );
     }
     nativeLog("party:saved", { editing: Boolean(existing?.id) });
     onOpenChange(false);
-    setName(""); setPhone(""); setNotes(""); setPhoto(undefined);
+    setName("");
+    setPhone("");
+    setNotes("");
+    setPhoto(undefined);
   }
 
   return (
@@ -146,28 +178,41 @@ export const PartyDialog = memo(function PartyDialog({
       className="max-w-sm"
       footer={
         <>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={save} disabled={!name.trim()}>Save</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={save} disabled={!name.trim()}>
+            Save
+          </Button>
         </>
       }
     >
-        <div className="space-y-3">
-          <div><Label>Name</Label><Input value={name} onChange={(event) => setName(event.target.value)} /></div>
-          <div><Label>Phone</Label><Input value={phone} onChange={(event) => setPhone(event.target.value)} /></div>
-          <div><Label>Notes</Label><Textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} /></div>
-          <div>
-            <Label>Photo</Label>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={async (e) => {
-                const f = e.target.files?.[0];
-                if (f) setPhoto(await fileToDataURL(f));
-              }}
-            />
-            {photo && <img src={photo} alt="" className="mt-2 h-20 w-20 rounded-full object-cover" />}
-          </div>
+      <div className="space-y-3">
+        <div>
+          <Label>Name</Label>
+          <Input value={name} onChange={(event) => setName(event.target.value)} />
         </div>
+        <div>
+          <Label>Phone</Label>
+          <Input value={phone} onChange={(event) => setPhone(event.target.value)} />
+        </div>
+        <div>
+          <Label>Notes</Label>
+          <Textarea rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
+        </div>
+        <div>
+          <Label>Photo</Label>
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (f) setPhoto(await fileToDataURL(f));
+            }}
+          />
+          {photo && <img src={photo} alt="" className="mt-2 h-20 w-20 rounded-full object-cover" />}
+        </div>
+      </div>
     </NativeModal>
   );
 });

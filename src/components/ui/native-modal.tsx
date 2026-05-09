@@ -11,11 +11,21 @@ interface NativeModalProps {
   className?: string;
 }
 
-export function NativeModal({ open, title, children, footer, onOpenChange, className }: NativeModalProps) {
+export function NativeModal({
+  open,
+  title,
+  children,
+  footer,
+  onOpenChange,
+  className,
+}: NativeModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-foreground/35 px-3 py-3" role="presentation">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-foreground/35 px-3 py-3"
+      role="presentation"
+    >
       <div
         role="dialog"
         aria-modal="true"
@@ -26,7 +36,9 @@ export function NativeModal({ open, title, children, footer, onOpenChange, class
         )}
       >
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 id="native-modal-title" className="text-lg font-semibold leading-tight">{title}</h2>
+          <h2 id="native-modal-title" className="text-lg font-semibold leading-tight">
+            {title}
+          </h2>
           <button
             type="button"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground active:bg-accent"
@@ -37,7 +49,11 @@ export function NativeModal({ open, title, children, footer, onOpenChange, class
           </button>
         </div>
         <div>{children}</div>
-        {footer && <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{footer}</div>}
+        {footer && (
+          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -67,10 +83,19 @@ export function NativeConfirm({
       onOpenChange={(v) => !v && onCancel()}
       footer={
         <>
-          <button type="button" className="h-10 rounded-md border border-input px-4 text-sm font-medium" onClick={onCancel}>Cancel</button>
           <button
             type="button"
-            className={cn("h-10 rounded-md px-4 text-sm font-medium text-primary-foreground", destructive ? "bg-danger" : "bg-primary")}
+            className="h-10 rounded-md border border-input px-4 text-sm font-medium"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "h-10 rounded-md px-4 text-sm font-medium text-primary-foreground",
+              destructive ? "bg-danger" : "bg-primary",
+            )}
             onClick={onConfirm}
           >
             {confirmLabel}
