@@ -5,7 +5,6 @@ import { AppShell } from "@/components/AppShell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LocalInput } from "@/components/ui/local-input";
 import { ArrowLeft, ArrowDownLeft, ArrowUpRight, Edit2, FileDown, FileUp, FileText, Phone, Trash2, MoreVertical, Search } from "lucide-react";
 import { memo, type ReactNode, useMemo, useRef, useState } from "react";
 import { TransactionDialog } from "@/components/TransactionDialog";
@@ -181,7 +180,7 @@ function PartyDetail() {
       <div className="px-4 mt-4 mb-2 flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <LocalInput className="pl-9" placeholder="Search transactions…" value={q} onValueChange={setQ} />
+          <Input className="pl-9" placeholder="Search transactions…" value={q} onChange={(event) => setQ(event.target.value)} />
         </div>
         <select
           value={sortBy}
@@ -296,8 +295,8 @@ function PartyDetail() {
         <div className="space-y-3 text-sm">
           <p className="text-muted-foreground text-xs">Choose an optional date range. Leave empty for all transactions.</p>
           <div className="grid grid-cols-2 gap-2">
-            <div><label className="text-xs text-muted-foreground">From</label><LocalInput type="date" value={pdfFrom} onValueChange={setPdfFrom} /></div>
-            <div><label className="text-xs text-muted-foreground">To</label><LocalInput type="date" value={pdfTo} onValueChange={setPdfTo} /></div>
+            <div><label className="text-xs text-muted-foreground">From</label><Input type="date" value={pdfFrom} onChange={(event) => setPdfFrom(event.target.value)} /></div>
+            <div><label className="text-xs text-muted-foreground">To</label><Input type="date" value={pdfTo} onChange={(event) => setPdfTo(event.target.value)} /></div>
           </div>
         </div>
       </NativeModal>
