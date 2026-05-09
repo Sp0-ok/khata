@@ -131,7 +131,20 @@ export function TransactionDialog({ open, onOpenChange, partyId, initialType, ex
           <div>
             <Label>Receipt Image</Label>
             <Input type="file" accept="image/*" onChange={handleFile} />
-            {receipt && <img src={receipt} alt="receipt" className="mt-2 max-h-32 rounded border border-border" />}
+            {receipt && (
+              <div className="relative mt-2 inline-block">
+                <img src={receipt} alt="receipt" className="max-h-32 rounded border border-border" />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  className="absolute -top-2 -right-2 h-6 px-2 text-xs rounded-full shadow"
+                  onClick={() => setReceipt(undefined)}
+                >
+                  Remove
+                </Button>
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>
