@@ -193,17 +193,39 @@ function PartyDetail() {
         <p className="mx-4 mt-3 text-xs text-muted-foreground bg-accent/40 rounded-lg p-2">{party.notes}</p>
       )}
 
-      <div className="px-4 mt-4 mb-2 relative">
-        <Search className="absolute left-7 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Search transactions…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="px-4 mt-4 mb-2 flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Search transactions…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-auto gap-1 px-2.5">
+            <ArrowUpDown className="h-4 w-4" />
+          </SelectTrigger>
+          <SelectContent align="end">
+            <SelectItem value="created-desc">Recently added</SelectItem>
+            <SelectItem value="created-asc">Oldest added</SelectItem>
+            <SelectItem value="date-desc">Date (newest)</SelectItem>
+            <SelectItem value="date-asc">Date (oldest)</SelectItem>
+            <SelectItem value="amount-desc">Amount (high → low)</SelectItem>
+            <SelectItem value="amount-asc">Amount (low → high)</SelectItem>
+            <SelectItem value="got-first">You Got first</SelectItem>
+            <SelectItem value="gave-first">You Gave first</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <section className="px-4 space-y-2 pb-32">
         {list.map((t) => {
           const isGot = t.type === "got";
           return (
-            <div key={t.id} className="rounded-xl bg-card border border-border p-3 flex items-start gap-3">
-              <div className={cn("h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold",
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setViewing(t)}
+              className="w-full text-left rounded-xl bg-card border border-border p-3 flex items-start gap-3 hover:bg-accent/40 transition-colors"
+            >
+              <div className={cn("h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
                 isGot ? "bg-success/15 text-success" : "bg-danger/15 text-danger")}>
                 {isGot ? "+" : "-"}
               </div>
@@ -211,19 +233,11 @@ function PartyDetail() {
                 <p className={cn("font-semibold text-sm tabular-nums", isGot ? "text-success" : "text-danger")}>
                   {isGot ? "+" : "-"} {fmtMoney(t.amount).replace(/^[+\-]\s?/, "")}
                 </p>
-                <p className="text-xs text-muted-foreground">{format(t.date, "MMM d yyyy, h:mm a")}</p>
-                {t.note && <p className="text-xs mt-1">{t.note}</p>}
-                {t.receipt && <img src={t.receipt} alt="" className="mt-2 max-h-24 rounded border border-border" />}
+                <p className="text-xs text-muted-foreground">{format(t.createdAt, "MMM d yyyy, h:mm a")}</p>
+                {t.note && <p className="text-xs mt-1 line-clamp-1">{t.note}</p>}
               </div>
-              <div className="flex flex-col gap-1">
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setConfirmEditTx(t)}>
-                  <Edit2 className="h-3.5 w-3.5" />
-                </Button>
-                <Button size="icon" variant="ghost" className="h-7 w-7 text-danger" onClick={() => setConfirmDeleteTx(t)}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
+              {t.receipt && <img src={t.receipt} alt="" className="h-10 w-10 rounded border border-border object-cover shrink-0" />}
+            </button>
           );
         })}
         {list.length === 0 && (
