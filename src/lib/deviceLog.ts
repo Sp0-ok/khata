@@ -118,7 +118,7 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) buffer = parsed.slice(-MAX_ENTRIES);
+      if (Array.isArray(parsed)) { buffer = parsed.slice(-MAX_ENTRIES); snapshot = buffer.slice(); }
     }
   } catch {}
 }
