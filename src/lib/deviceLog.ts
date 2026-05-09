@@ -182,9 +182,6 @@ function ensureAlwaysOnLogPanel() {
 
 function updateAlwaysOnLogPanel() {
   if (typeof window === "undefined" || typeof document === "undefined") return;
-  if (!alwaysOnPanel || !document.documentElement.contains(alwaysOnPanel)) {
-    ensureAlwaysOnLogPanel();
-  }
   if (!alwaysOnPanel || !alwaysOnBody) return;
 
   const header = alwaysOnPanel.querySelector("[data-log-header]") as HTMLDivElement | null;
