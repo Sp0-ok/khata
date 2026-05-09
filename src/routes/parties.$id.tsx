@@ -355,6 +355,38 @@ function PartyDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Export PDF Statement</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground text-xs">Choose an optional date range. Leave empty for all transactions.</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground">From</label>
+                <Input type="date" value={pdfFrom} onChange={(e) => setPdfFrom(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">To</label>
+                <Input type="date" value={pdfTo} onChange={(e) => setPdfTo(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPdfFrom(""); setPdfTo(""); }}>Clear</Button>
+            <Button
+              onClick={() => {
+                const from = pdfFrom ? new Date(pdfFrom + "T00:00:00").getTime() : undefined;
+                const to = pdfTo ? new Date(pdfTo + "T23:59:59").getTime() : undefined;
+                exportPartyPDF(party, txs ?? [], { from, to });
+                setPdfOpen(false);
+              }}
+            >Generate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
