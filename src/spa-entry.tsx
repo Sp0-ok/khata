@@ -28,14 +28,17 @@ function showFatal(msg: string) {
     if (root && !root.hasChildNodes()) {
       root.innerHTML = `<div style="padding:16px;font:14px/1.4 system-ui;color:#b91c1c;white-space:pre-wrap;word-break:break-word">App error:\n${msg}</div>`;
     }
-  } catch {}
+  } catch {
+    // Last-resort error UI must never throw.
+  }
 }
 window.addEventListener("error", (e) =>
   showFatal(String(e.error?.stack || e.error?.message || e.message)),
 );
-window.addEventListener("unhandledrejection", (e) =>
-  showFatal(String((e.reason as any)?.stack || (e.reason as any)?.message || e.reason)),
-);
+window.addEventListener("unhandledrejection", (e) => {
+  const reason = e.reason;
+  showFatal(String(reason instanceof Error ? reason.stack || reason.message : reason));
+});
 
 const router = getRouter();
 const queryClient = router.options.context!.queryClient;
