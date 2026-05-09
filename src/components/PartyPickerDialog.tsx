@@ -63,7 +63,7 @@ export const PartyPickerDialog = memo(function PartyPickerDialog({
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <div className="max-h-72 overflow-y-auto -mx-2">
+          <div className="keyboard-scroll h-72 -mx-2">
             {filtered.map((p) => (
               <button
                 key={p.id}

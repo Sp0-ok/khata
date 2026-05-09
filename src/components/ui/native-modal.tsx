@@ -28,7 +28,7 @@ export function NativeModal({ open, title, children, footer, onOpenChange, class
   if (!open) return null;
 
   return (
-    <div className="absolute inset-x-0 top-0 z-50 min-h-[100dvh] bg-foreground/35 px-3 py-3" role="presentation">
+    <div className="keyboard-scroll absolute inset-x-0 top-0 z-50 h-screen bg-foreground/35 px-3 py-3" role="presentation">
       <div
         role="dialog"
         aria-modal="true"
@@ -49,7 +49,7 @@ export function NativeModal({ open, title, children, footer, onOpenChange, class
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div>{children}</div>
+        <div className="keyboard-scroll max-h-[calc(100vh-11rem)]">{children}</div>
         {footer && <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{footer}</div>}
       </div>
     </div>
