@@ -44,6 +44,9 @@ function PartyDetail() {
   const [q, setQ] = useState("");
   const [sortBy, setSortBy] = useState<string>("created-desc");
   const [viewing, setViewing] = useState<Transaction | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [pdfFrom, setPdfFrom] = useState("");
+  const [pdfTo, setPdfTo] = useState("");
 
   const party = useLiveQuery(() => db.parties.get(partyId), [partyId]);
   const txs = useLiveQuery(
