@@ -218,7 +218,7 @@ function ReportsPage() {
                     fontSize: 12,
                     boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                   }}
-                  formatter={(v: number | string, name: string) => [
+                  formatter={(v: unknown, name: unknown) => [
                     fmtMoney(Number(v) || 0),
                     name === "Got" ? "In" : "Out",
                   ]}
