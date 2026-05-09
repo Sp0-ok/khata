@@ -33,7 +33,7 @@ function HomePage() {
   const businessName = useLiveQuery(async () => (await db.settings.get("businessName"))?.value as string | undefined, []);
 
   const partyMap = new Map((parties ?? []).map((p) => [p.id!, p]));
-  const net = (allTxs ?? []).reduce((s, t) => s + (t.type === "got" ? t.amount : -t.amount), 0);
+  const net = (allTxs ?? []).reduce((s, t) => s + (t.type === "gave" ? t.amount : -t.amount), 0);
   const totalGot = (allTxs ?? []).filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
   const totalGave = (allTxs ?? []).filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
 

@@ -55,12 +55,15 @@ export async function setSetting(key: string, value: any) {
   await db.settings.put({ key, value });
 }
 
+// Convention: positive balance = the party owes you (you'll get).
+//   "You Gave"  -> party owes you more   -> +amount
+//   "You Got"   -> party owes you less   -> -amount
 export async function partyBalance(partyId: number): Promise<number> {
   const txs = await db.transactions.where("partyId").equals(partyId).toArray();
-  return txs.reduce((sum, t) => sum + (t.type === "got" ? t.amount : -t.amount), 0);
+  return txs.reduce((sum, t) => sum + (t.type === "gave" ? t.amount : -t.amount), 0);
 }
 
 export async function netTotal(): Promise<number> {
   const txs = await db.transactions.toArray();
-  return txs.reduce((sum, t) => sum + (t.type === "got" ? t.amount : -t.amount), 0);
+  return txs.reduce((sum, t) => sum + (t.type === "gave" ? t.amount : -t.amount), 0);
 }
