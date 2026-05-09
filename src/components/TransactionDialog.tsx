@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { memo, useEffect, useState } from "react";
+import { NativeModal } from "@/components/ui/native-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { db, type Transaction, type TxType } from "@/lib/db";
-import { fileToDataURL } from "@/lib/exporters";
+import { fileToDataURL } from "@/lib/fileData";
 import { groupAmount, unformatAmount } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { nativeLog, withNativeTimeout } from "@/lib/androidStability";
 
 interface Props {
   open: boolean;
@@ -20,7 +21,7 @@ interface Props {
 
 
 
-export function TransactionDialog({ open, onOpenChange, partyId, initialType, existing, onSaved }: Props) {
+export const TransactionDialog = memo(function TransactionDialog({ open, onOpenChange, partyId, initialType, existing, onSaved }: Props) {
   const [type, setType] = useState<TxType>(initialType);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -52,16 +53,16 @@ export function TransactionDialog({ open, onOpenChange, partyId, initialType, ex
     setSaving(true);
     try {
       if (existing?.id) {
-        await db.transactions.update(existing.id, {
+        await withNativeTimeout("transaction:update", db.transactions.update(existing.id, {
           amount: amt,
           type,
           note,
           receipt,
           date: new Date(date).getTime(),
           updatedAt: Date.now(),
-        });
+        }));
       } else {
-        await db.transactions.add({
+        await withNativeTimeout("transaction:add", db.transactions.add({
           partyId,
           amount: amt,
           type,
@@ -69,10 +70,11 @@ export function TransactionDialog({ open, onOpenChange, partyId, initialType, ex
           receipt,
           date: new Date(date).getTime(),
           createdAt: Date.now(),
-        });
+        }));
       }
       onSaved?.();
       onOpenChange(false);
+      nativeLog("transaction:saved", { partyId, type });
     } finally {
       setSaving(false);
     }
@@ -85,11 +87,18 @@ export function TransactionDialog({ open, onOpenChange, partyId, initialType, ex
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>{existing ? "Edit Transaction" : type === "got" ? "You Got" : "You Gave"}</DialogTitle>
-        </DialogHeader>
+    <NativeModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title={existing ? "Edit Transaction" : type === "got" ? "You Got" : "You Gave"}
+      className="max-w-sm"
+      footer={
+        <>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving || !amount}>Save</Button>
+        </>
+      }
+    >
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <Button
@@ -116,7 +125,6 @@ export function TransactionDialog({ open, onOpenChange, partyId, initialType, ex
               inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(groupAmount(e.target.value))}
-              autoFocus
               placeholder="0.00"
             />
           </div>
@@ -147,11 +155,6 @@ export function TransactionDialog({ open, onOpenChange, partyId, initialType, ex
             )}
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving || !amount}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </NativeModal>
   );
-}
+});

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { NativeModal } from "@/components/ui/native-modal";
 import { Input } from "@/components/ui/input";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { TransactionDialog } from "./TransactionDialog";
 import type { TxType } from "@/lib/db";
+import { afterNativeFrame, clearRadixLocks, nativeLog, withNativeTimeout } from "@/lib/androidStability";
 
-export function PartyPickerDialog({
+export const PartyPickerDialog = memo(function PartyPickerDialog({
   open,
   onOpenChange,
   type,
@@ -25,31 +26,45 @@ export function PartyPickerDialog({
   const parties = useLiveQuery(() => db.parties.orderBy("name").toArray(), []);
   const navigate = useNavigate();
 
-  const filtered = (parties ?? []).filter((p) =>
-    p.name.toLowerCase().includes(q.toLowerCase()) || (p.phone ?? "").includes(q)
-  );
+  useEffect(() => {
+    if (!open) {
+      setPickedId(null);
+      setQ("");
+      setNewName("");
+    } else {
+      nativeLog("party-picker:open", type);
+    }
+  }, [open, type]);
+
+  const filtered = useMemo(() => {
+    const query = q.toLowerCase();
+    return (parties ?? []).filter((p) =>
+      p.name.toLowerCase().includes(query) || (p.phone ?? "").includes(q)
+    ).slice(0, 80);
+  }, [parties, q]);
 
   async function quickCreate() {
     const name = newName.trim();
     if (!name) return;
-    const id = await db.parties.add({ name, createdAt: Date.now() });
+    const id = await withNativeTimeout("party:quick-create", db.parties.add({ name, createdAt: Date.now() }));
     setPickedId(id as number);
+  }
+
+  function pick(id: number) {
+    nativeLog("party-picker:picked", id);
+    afterNativeFrame(() => setPickedId(id));
   }
 
   return (
     <>
-      <Dialog open={open && pickedId === null} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Select Party</DialogTitle>
-          </DialogHeader>
-          <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+      <NativeModal open={open && pickedId === null} onOpenChange={onOpenChange} title="Select Party" className="max-w-sm">
+          <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} />
           <div className="max-h-72 overflow-y-auto -mx-2">
             {filtered.map((p) => (
               <button
                 key={p.id}
-                onClick={() => setPickedId(p.id!)}
-                className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-accent"
+                onClick={() => pick(p.id!)}
+                className="flex w-full touch-manipulation items-center gap-3 rounded-md px-2 py-2 text-left active:bg-accent"
               >
                 <Avatar className="h-9 w-9">
                   {p.photo && <AvatarImage src={p.photo} />}
@@ -79,6 +94,7 @@ export function PartyPickerDialog({
               variant="ghost"
               className="w-full text-xs"
               onClick={() => {
+                clearRadixLocks();
                 onOpenChange(false);
                 navigate({ to: "/parties" });
               }}
@@ -86,8 +102,7 @@ export function PartyPickerDialog({
               Manage all parties →
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+      </NativeModal>
 
       {pickedId !== null && (
         <TransactionDialog
@@ -104,4 +119,4 @@ export function PartyPickerDialog({
       )}
     </>
   );
-}
+});

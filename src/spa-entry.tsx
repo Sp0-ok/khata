@@ -9,6 +9,7 @@ import { getRouter } from "./router";
 import { applyStoredTheme } from "./lib/theme";
 import { loadCurrency } from "./lib/format";
 import { Toaster } from "./components/ui/sonner";
+import { clearRadixLocks, installAndroidFreezeWatchdog, nativeLog } from "./lib/androidStability";
 import "./styles.css";
 
 // Surface any uncaught error inside the WebView instead of freezing silently.
@@ -31,6 +32,9 @@ window.addEventListener("unhandledrejection", (e) => {
 
 const router = getRouter();
 const queryClient = router.options.context!.queryClient;
+installAndroidFreezeWatchdog();
+router.subscribe("onBeforeNavigate", () => { clearRadixLocks(); nativeLog("nav:before", location.pathname); });
+router.subscribe("onLoad", () => { clearRadixLocks(); nativeLog("nav:loaded", location.pathname); });
 
 applyStoredTheme();
 loadCurrency();

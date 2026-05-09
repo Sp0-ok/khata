@@ -6,13 +6,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, ArrowLeft } from "lucide-react";
-import { useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { memo, useMemo, useState } from "react";
+import { NativeModal } from "@/components/ui/native-modal";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { fileToDataURL } from "@/lib/exporters";
+import { fileToDataURL } from "@/lib/fileData";
 import { fmtMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { clearRadixLocks, nativeLog, withNativeTimeout } from "@/lib/androidStability";
 
 export const Route = createFileRoute("/parties/")({
   component: PartiesPage,
@@ -31,27 +32,33 @@ function PartiesPage() {
   const parties = useLiveQuery(() => db.parties.orderBy("name").toArray(), []);
   const txs = useLiveQuery(() => db.transactions.toArray(), []);
 
-  const balances = new Map<number, number>();
-  (txs ?? []).forEach((t) => {
-    const cur = balances.get(t.partyId) ?? 0;
-    // Display sign from party's perspective: positive = you owe them, negative = they owe you
-    balances.set(t.partyId, cur + (t.type === "got" ? t.amount : -t.amount));
-  });
+  const balances = useMemo(() => {
+    const map = new Map<number, number>();
+    (txs ?? []).forEach((t) => {
+      const cur = map.get(t.partyId) ?? 0;
+      // Display sign from party's perspective: positive = you owe them, negative = they owe you
+      map.set(t.partyId, cur + (t.type === "got" ? t.amount : -t.amount));
+    });
+    return map;
+  }, [txs]);
 
-  const filtered = (parties ?? []).filter(
-    (p) => p.name.toLowerCase().includes(q.toLowerCase()) || (p.phone ?? "").includes(q)
-  );
+  const filtered = useMemo(() => {
+    const query = q.toLowerCase();
+    return (parties ?? []).filter(
+      (p) => p.name.toLowerCase().includes(query) || (p.phone ?? "").includes(q)
+    ).slice(0, 120);
+  }, [parties, q]);
 
   return (
     <AppShell>
       <header className="flex items-center justify-between px-4 pt-5 pb-2">
         <div className="flex items-center gap-2">
-          <Link to="/" className="rounded-full p-1.5 hover:bg-accent md:hidden">
+          <Link to="/" preload={false} onClick={clearRadixLocks} className="rounded-full p-1.5 hover:bg-accent md:hidden">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <h1 className="text-xl font-bold">Parties</h1>
         </div>
-        <Button size="sm" onClick={() => setOpen(true)}>
+        <Button size="sm" onClick={() => { nativeLog("party:new:open"); setOpen(true); }}>
           <Plus className="h-4 w-4 mr-1" /> New
         </Button>
       </header>
@@ -69,7 +76,9 @@ function PartiesPage() {
               key={p.id}
               to="/parties/$id"
               params={{ id: String(p.id) }}
-              className="flex items-center gap-3 rounded-xl bg-card p-3 border border-border hover:bg-accent/50 transition-colors"
+              preload={false}
+              onClick={clearRadixLocks}
+              className="flex touch-manipulation items-center gap-3 rounded-xl bg-card p-3 border border-border hover:bg-accent/50"
             >
               <Avatar className="h-11 w-11">
                 {p.photo && <AvatarImage src={p.photo} />}
@@ -102,7 +111,7 @@ function PartiesPage() {
   );
 }
 
-export function PartyDialog({
+export const PartyDialog = memo(function PartyDialog({
   open,
   onOpenChange,
   existing,
@@ -120,20 +129,30 @@ export function PartyDialog({
     const n = name.trim();
     if (!n) return;
     if (existing?.id) {
-      await db.parties.update(existing.id, { name: n, phone, notes, photo });
+      await withNativeTimeout("party:update", db.parties.update(existing.id, { name: n, phone, notes, photo }));
     } else {
-      await db.parties.add({ name: n, phone, notes, photo, createdAt: Date.now() });
+      await withNativeTimeout("party:add", db.parties.add({ name: n, phone, notes, photo, createdAt: Date.now() }));
     }
+    nativeLog("party:saved", { editing: Boolean(existing?.id) });
     onOpenChange(false);
     setName(""); setPhone(""); setNotes(""); setPhoto(undefined);
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader><DialogTitle>{existing ? "Edit Party" : "New Party"}</DialogTitle></DialogHeader>
+    <NativeModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title={existing ? "Edit Party" : "New Party"}
+      className="max-w-sm"
+      footer={
+        <>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={save} disabled={!name.trim()}>Save</Button>
+        </>
+      }
+    >
         <div className="space-y-3">
-          <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} autoFocus /></div>
+          <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
           <div><Label>Notes</Label><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
           <div>
@@ -149,11 +168,6 @@ export function PartyDialog({
             {photo && <img src={photo} alt="" className="mt-2 h-20 w-20 rounded-full object-cover" />}
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={save} disabled={!name.trim()}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </NativeModal>
   );
-}
+});
