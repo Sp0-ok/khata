@@ -63,36 +63,140 @@ export async function importPartyCSV(partyId: number, file: File): Promise<numbe
   });
 }
 
-export async function exportPartyPDF(party: Party, txs: Transaction[]) {
+export async function exportPartyPDF(
+  party: Party,
+  txs: Transaction[],
+  range?: { from?: number; to?: number }
+) {
   const doc = new jsPDF();
   const cur = currency();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 14;
+
+  // Filter by range
+  const from = range?.from;
+  const to = range?.to;
+  const inRange = txs
+    .filter((t) => (from == null || t.date >= from) && (to == null || t.date <= to))
+    .sort((a, b) => a.date - b.date);
+
+  const opening = from != null
+    ? txs.filter((t) => t.date < from).reduce((s, t) => s + (t.type === "got" ? t.amount : -t.amount), 0)
+    : 0;
+  // Convention: positive = party owes you (you gave more). Like image: dr means debit balance.
+  // In image: "You Gave" = Debit (-), "You Got" = Credit (+); Balance = Debit - Credit running.
+  const totalDebit = inRange.filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
+  const totalCredit = inRange.filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
+  // Net (period): debit - credit (positive => party owes you)
+  const periodNet = totalDebit - totalCredit;
+  // Opening as debit-style (positive => party owes you)
+  const openingDebit = -opening;
+  const runningBalance = openingDebit + periodNet;
+
+  const fmt = (n: number) => `${cur} ${Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  const fmtDate = (ms: number) => format(ms, "dd MMM yy");
+
+  // Embed photo top-right
+  if (party.photo) {
+    try {
+      const ext = party.photo.startsWith("data:image/png") ? "PNG" : "JPEG";
+      doc.addImage(party.photo, ext, pageWidth - margin - 22, 10, 22, 22, undefined, "FAST");
+    } catch {}
+  }
+
+  // Centered title
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text(`Statement: ${party.name}`, 14, 18);
+  doc.text(`${party.name} Statement`, pageWidth / 2, 20, { align: "center" });
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  if (party.phone) doc.text(`Phone: ${party.phone}`, 14, 26);
-  doc.text(`Generated: ${format(Date.now(), "yyyy-MM-dd HH:mm")}`, 14, 32);
+  doc.setTextColor(110);
+  if (party.phone) doc.text(`Phone Number: ${party.phone}`, pageWidth / 2, 27, { align: "center" });
 
-  const totalGot = txs.filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
-  const totalGave = txs.filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
-  const net = totalGot - totalGave;
+  const rangeFromLabel = from != null ? fmtDate(from) : (txs.length ? fmtDate(Math.min(...txs.map((t) => t.date))) : fmtDate(Date.now()));
+  const rangeToLabel = to != null ? fmtDate(to) : fmtDate(Date.now());
+  doc.text(`(${rangeFromLabel} - ${rangeToLabel})`, pageWidth / 2, 33, { align: "center" });
+  doc.setTextColor(0);
 
-  doc.text(`You Got: ${cur}${totalGot.toFixed(2)}`, 14, 40);
-  doc.text(`You Gave: ${cur}${totalGave.toFixed(2)}`, 70, 40);
-  doc.text(`Net: ${cur}${net.toFixed(2)}`, 130, 40);
+  // Summary cards row
+  const cards: Array<{ label: string; value: string; sub?: string; color?: [number, number, number] }> = [
+    { label: "Opening Balance", value: openingDebit === 0 ? `${cur} 0` : fmt(openingDebit), sub: openingDebit === 0 ? "(settled)" : openingDebit > 0 ? "(will give)" : "(will get)", color: openingDebit > 0 ? [220, 38, 38] : [22, 163, 74] },
+    { label: "Total Debit (-)", value: fmt(totalDebit), color: [220, 38, 38] },
+    { label: "Total Credit (+)", value: fmt(totalCredit), color: [22, 163, 74] },
+    { label: "Net Balance", value: fmt(periodNet), sub: periodNet === 0 ? "(settled)" : periodNet > 0 ? `(${party.name} will give)` : `(${party.name} will get)`, color: periodNet >= 0 ? [220, 38, 38] : [22, 163, 74] },
+    { label: "Running Balance", value: fmt(runningBalance), sub: runningBalance === 0 ? "(settled)" : runningBalance > 0 ? `(${party.name} will give)` : `(${party.name} will get)`, color: runningBalance >= 0 ? [220, 38, 38] : [22, 163, 74] },
+  ];
+
+  const cardsY = 42;
+  const cardsH = 26;
+  const innerW = pageWidth - margin * 2;
+  const cardW = innerW / cards.length;
+
+  doc.setDrawColor(220);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(margin, cardsY, innerW, cardsH, 2, 2);
+  cards.forEach((c, i) => {
+    const x = margin + i * cardW;
+    if (i > 0) doc.line(x, cardsY + 3, x, cardsY + cardsH - 3);
+    doc.setFontSize(8);
+    doc.setTextColor(110);
+    doc.text(c.label, x + 3, cardsY + 6);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    if (c.color) doc.setTextColor(c.color[0], c.color[1], c.color[2]); else doc.setTextColor(0);
+    doc.text(c.value, x + 3, cardsY + 13);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(130);
+    if (c.sub) doc.text(c.sub, x + 3, cardsY + 18);
+  });
+  doc.setTextColor(0);
+
+  // Entries header
+  const entriesY = cardsY + cardsH + 8;
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text(`No. of Entries: ${inRange.length}${range && (from != null || to != null) ? "" : " (All)"}`, margin, entriesY);
+  doc.setFont("helvetica", "normal");
+
+  // Build rows with running balance
+  let bal = openingDebit;
+  const body = inRange.map((t, i) => {
+    const debit = t.type === "gave" ? t.amount : 0;
+    const credit = t.type === "got" ? t.amount : 0;
+    bal += debit - credit;
+    return [
+      String(i + 1),
+      fmtDate(t.date),
+      t.note ?? "",
+      debit ? fmt(debit) : "",
+      credit ? fmt(credit) : "",
+      fmt(bal),
+    ];
+  });
 
   autoTable(doc, {
-    startY: 46,
-    head: [["Date", "Type", "Amount", "Method", "Note"]],
-    body: txs.map((t) => [
-      format(t.date, "yyyy-MM-dd HH:mm"),
-      t.type === "got" ? "You Got" : "You Gave",
-      `${cur}${t.amount.toFixed(2)}`,
-      t.paymentMethod ?? "",
-      t.note ?? "",
-    ]),
-    headStyles: { fillColor: [20, 150, 150] },
-    styles: { fontSize: 9 },
+    startY: entriesY + 4,
+    head: [["#", "Date", "Details", "Debit (-)", "Credit (+)", "Balance"]],
+    body,
+    foot: [["", "", "Grand Total", fmt(totalDebit), fmt(totalCredit), fmt(runningBalance)]],
+    headStyles: { fillColor: [240, 240, 245], textColor: 30, fontStyle: "bold" },
+    footStyles: { fillColor: [245, 245, 248], textColor: 30, fontStyle: "bold" },
+    bodyStyles: { fontSize: 9 },
+    columnStyles: {
+      0: { halign: "center", cellWidth: 10 },
+      3: { halign: "right", fillColor: [253, 235, 235] },
+      4: { halign: "right", fillColor: [232, 247, 240] },
+      5: { halign: "right", textColor: [220, 38, 38] },
+    },
+    styles: { lineColor: [220, 220, 220], lineWidth: 0.2 },
+    margin: { left: margin, right: margin },
   });
+
+  const finalY = (doc as any).lastAutoTable.finalY ?? entriesY + 20;
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  doc.text(`Report Generated : ${format(Date.now(), "hh:mm a | dd MMM yy")}`, margin, finalY + 8);
 
   doc.save(`${party.name}-statement.pdf`);
 }
