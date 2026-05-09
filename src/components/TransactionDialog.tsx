@@ -106,22 +106,13 @@ export function TransactionDialog({ open, onOpenChange, partyId, initialType, ex
           <div>
             <Label>Amount</Label>
             <Input
-              type="number"
+              type="text"
               inputMode="decimal"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
               autoFocus
               placeholder="0.00"
             />
-          </div>
-          <div>
-            <Label>Payment Method</Label>
-            <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PAYMENT_METHODS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-              </SelectContent>
-            </Select>
           </div>
           <div>
             <Label>Date & Time</Label>
