@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "build": "vite build && node scripts/postbuild-spa-html.mjs",
+    "build:dev": "vite build --mode development && node scripts/postbuild-spa-html.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."
