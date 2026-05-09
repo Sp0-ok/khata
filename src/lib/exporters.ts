@@ -94,27 +94,28 @@ export async function exportPartyPDF(
     .filter((t) => (from == null || t.date >= from) && (to == null || t.date <= to))
     .sort((a, b) => a.date - b.date);
 
-  // Convention: positive balance = party owes you (you'll get).
-  //   "You Gave"  -> +amount   (party owes you more)  -> Debit row
-  //   "You Got"   -> -amount   (party owes you less)  -> Credit row
+  // Display convention (from party's perspective):
+  //   "You Got"  -> +amount   (party owes you less / you owe more)
+  //   "You Gave" -> -amount   (you owe less / party owes you more)
+  // So a POSITIVE balance means YOU OWE the party (party will get).
+  //    a NEGATIVE balance means PARTY OWES YOU (party will give).
   const opening = from != null
-    ? txs.filter((t) => t.date < from).reduce((s, t) => s + (t.type === "gave" ? t.amount : -t.amount), 0)
+    ? txs.filter((t) => t.date < from).reduce((s, t) => s + (t.type === "got" ? t.amount : -t.amount), 0)
     : 0;
-  const totalDebit  = inRange.filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
-  const totalCredit = inRange.filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
-  const periodNet     = totalDebit - totalCredit; // positive => party owes you
+  const totalDebit  = inRange.filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0); // You Gave
+  const totalCredit = inRange.filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);  // You Got
+  const periodNet      = totalCredit - totalDebit;
   const runningBalance = opening + periodNet;
 
-  const fmtDate = (ms: number) => format(ms, "dd MMM yy");
+  const fmtDate = (ms: number) => format(ms, "dd MMM yy, HH:mm");
+  const fmtDateShort = (ms: number) => format(ms, "dd MMM yy");
 
-  // label helpers — positive => party will give you back ("you'll get")
   function balanceLabel(n: number): string {
     if (n === 0) return "(settled)";
-    return n > 0 ? `(${party.name} will give)` : `(${party.name} will get)`;
+    return n > 0 ? `(${party.name} will get)` : `(${party.name} will give)`;
   }
-  // colour for "good for you" (party owes you) = green
   function balanceColor(n: number): [number, number, number] {
-    if (n === 0) return [110, 110, 110];
+    if (n === 0) return [60, 60, 60];
     return n > 0 ? [22, 163, 74] : [220, 38, 38];
   }
 
@@ -136,9 +137,9 @@ export async function exportPartyPDF(
   if (party.phone) doc.text(`Phone Number: ${party.phone}`, pageWidth / 2, 27, { align: "center" });
 
   const rangeFromLabel = from != null
-    ? fmtDate(from)
-    : (txs.length ? fmtDate(Math.min(...txs.map((t) => t.date))) : fmtDate(Date.now()));
-  const rangeToLabel = to != null ? fmtDate(to) : fmtDate(Date.now());
+    ? fmtDateShort(from)
+    : (txs.length ? fmtDateShort(Math.min(...txs.map((t) => t.date))) : fmtDateShort(Date.now()));
+  const rangeToLabel = to != null ? fmtDateShort(to) : fmtDateShort(Date.now());
   doc.text(`(${rangeFromLabel} - ${rangeToLabel})`, pageWidth / 2, 33, { align: "center" });
   doc.setTextColor(0);
 
@@ -200,10 +201,12 @@ export async function exportPartyPDF(
 
   // Build rows with running balance
   let bal = opening;
+  const balances: number[] = [];
   const body = inRange.map((t, i) => {
     const debit  = t.type === "gave" ? t.amount : 0;
     const credit = t.type === "got"  ? t.amount : 0;
-    bal += debit - credit;
+    bal += credit - debit;
+    balances.push(bal);
     return [
       String(i + 1),
       fmtDate(t.date),
@@ -221,7 +224,7 @@ export async function exportPartyPDF(
 
   autoTable(doc, {
     startY: entriesY + 4,
-    head: [["#", "Date", "Details", "Debit (You Gave)", "Credit (You Got)", "Balance"]],
+    head: [["#", "Date & Time", "Details", "Debit (You Gave)", "Credit (You Got)", "Balance"]],
     body,
     foot: [[
       "",
@@ -232,53 +235,39 @@ export async function exportPartyPDF(
       fmtPdfMoney(runningBalance),
     ]],
     headStyles: { fillColor: [240, 240, 245], textColor: 30, fontStyle: "bold", halign: "left" },
-    footStyles: { fillColor: [245, 245, 248], textColor: 30, fontStyle: "bold" },
-    bodyStyles: { fontSize: 9, cellPadding: 2, valign: "middle" },
+    footStyles: { fillColor: [255, 255, 255], textColor: 0, fontStyle: "bold" },
+    bodyStyles: { fontSize: 9, cellPadding: 2, valign: "middle", textColor: 0 },
     columnStyles: {
       0: { halign: "center", cellWidth: 10 },
-      1: { cellWidth: 22 },
+      1: { cellWidth: 30 },
       2: { cellWidth: "auto" },
-      3: { halign: "right", cellWidth: 30 },
-      4: { halign: "right", cellWidth: 30 },
-      5: { halign: "right", cellWidth: 32 },
+      3: { halign: "right", cellWidth: 28 },
+      4: { halign: "right", cellWidth: 28 },
+      5: { halign: "right", cellWidth: 30 },
     },
     didParseCell: (data) => {
       if (data.section === "body") {
+        // Debit cell: only fill if there's a value, text stays default black
         if (data.column.index === 3) {
-          data.cell.styles.fillColor = debitFill;
-          data.cell.styles.textColor = debitText;
-          data.cell.styles.fontStyle = "bold";
-        } else if (data.column.index === 4) {
-          data.cell.styles.fillColor = creditFill;
-          data.cell.styles.textColor = creditText;
-          data.cell.styles.fontStyle = "bold";
-        } else if (data.column.index === 5) {
-          const v = body[data.row.index]?.[5] ?? "";
-          // Read raw balance for color (use parallel running balance array)
-          // Re-derive from running calc by parsing; simpler: recompute here
-          // Use index to look up the original tx and recompute the balance up to here
-          let runBal = opening;
-          for (let i = 0; i <= data.row.index; i++) {
-            const t = inRange[i];
-            runBal += (t.type === "gave" ? t.amount : -t.amount);
+          const v = body[data.row.index]?.[3];
+          if (v) {
+            data.cell.styles.fillColor = debitFill;
+            data.cell.styles.fontStyle = "bold";
           }
-          data.cell.styles.textColor = runBal === 0 ? [80, 80, 80] : runBal > 0 ? creditText : debitText;
-          data.cell.styles.fontStyle = "bold";
-          // Avoid ts unused
-          void v;
-        }
-      } else if (data.section === "foot") {
-        if (data.column.index === 3) {
-          data.cell.styles.fillColor = debitFill;
-          data.cell.styles.textColor = debitText;
         } else if (data.column.index === 4) {
-          data.cell.styles.fillColor = creditFill;
-          data.cell.styles.textColor = creditText;
+          const v = body[data.row.index]?.[4];
+          if (v) {
+            data.cell.styles.fillColor = creditFill;
+            data.cell.styles.fontStyle = "bold";
+          }
         } else if (data.column.index === 5) {
+          const runBal = balances[data.row.index] ?? 0;
           data.cell.styles.textColor =
-            runningBalance === 0 ? [80, 80, 80] : runningBalance > 0 ? creditText : debitText;
+            runBal === 0 ? [60, 60, 60] : runBal > 0 ? creditText : debitText;
+          data.cell.styles.fontStyle = "bold";
         }
       }
+      // foot rows keep default white bg + black text (no overrides)
     },
     styles: { lineColor: [220, 220, 220], lineWidth: 0.2, overflow: "linebreak" },
     margin: { left: margin, right: margin },

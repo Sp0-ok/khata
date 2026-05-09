@@ -84,7 +84,8 @@ function PartyDetail() {
 
   const totalGot = (txs ?? []).filter((t) => t.type === "got").reduce((s, t) => s + t.amount, 0);
   const totalGave = (txs ?? []).filter((t) => t.type === "gave").reduce((s, t) => s + t.amount, 0);
-  const net = totalGave - totalGot;
+  // Display from party's perspective: + you owe them (teal), − they owe you (red)
+  const net = totalGot - totalGave;
 
   function newTx(type: "got" | "gave") {
     setEditingTx(undefined);

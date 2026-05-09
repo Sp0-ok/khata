@@ -34,7 +34,8 @@ function PartiesPage() {
   const balances = new Map<number, number>();
   (txs ?? []).forEach((t) => {
     const cur = balances.get(t.partyId) ?? 0;
-    balances.set(t.partyId, cur + (t.type === "gave" ? t.amount : -t.amount));
+    // Display sign from party's perspective: positive = you owe them, negative = they owe you
+    balances.set(t.partyId, cur + (t.type === "got" ? t.amount : -t.amount));
   });
 
   const filtered = (parties ?? []).filter(
@@ -82,9 +83,9 @@ function PartiesPage() {
               </div>
               <div className="text-right">
                 <p className={cn("font-semibold tabular-nums text-sm", bal < 0 ? "text-danger" : bal > 0 ? "text-success" : "text-muted-foreground")}>
-                  {fmtMoney(bal)}
+                  {fmtMoney(bal, true)}
                 </p>
-                <p className="text-[10px] text-muted-foreground">{bal < 0 ? "you'll give" : bal > 0 ? "you'll get" : "settled"}</p>
+                <p className="text-[10px] text-muted-foreground">{bal < 0 ? "you'll get" : bal > 0 ? "you'll give" : "settled"}</p>
               </div>
             </Link>
           );
